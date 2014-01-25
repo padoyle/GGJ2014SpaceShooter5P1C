@@ -127,13 +127,61 @@ window.onload = function() {
 				this.velY = 3;
 			}
 		});
+
+		var EnemyWithMoves = Class.create(Enemy, {
+			initialize: function(_moveset) {
+				Enemy.call(this, 30, 30);
+				this.image = game.assets['images/Square.png'];
+				this.moveset = _moveset;
+				this.move = this.moveset.nextMove();
+				this.move_progress = 0;
+				this.x = 300;
+				this.y = 50;
+				this.velX = Math.cos(this.move.direction) * this.move.speed;
+				this.velY = Math.sin(this.move.direction) * this.move.speed;
+				console.log("Change move!");
+			},
+
+			onenterframe: function() {
+				if (this.move_progress >= this.move.duration) {
+					this.move = this.moveset.nextMove();
+					this.move_progress = 0;
+					this.velX = Math.cos(this.move.direction) * this.move.speed;
+					this.velY = Math.sin(this.move.direction) * this.move.speed;
+					console.log("Change move!");
+				}
+
+				if (this.y > gameHeight - this.height) {
+					this.y = gameHeight - this.height;
+				}
+				if (this.y < 0) {
+					this.y = 0;
+				}
+				if (this.x < 0) {
+					this.x = 0;
+				}
+				if (this.x > gameWidth - this.width) {
+					this.x = gameWidth - this.width;
+				}
+				this.x += this.velX;
+				this.y += this.velY;
+
+				this.move_progress++;
+			}
+		});
 		
 		var enemyX = new EnemyX();
 		var enemyY = new EnemyY();
+
+		var enemyWithMoves = new EnemyWithMoves(new MoveSet(new Array(
+				new Move(0, 1.5, 60, 0, 0),
+				new Move((11.0 / 4.0) * Math.PI, 3, 30, 0, 0),
+				new Move((13.0 / 4.0) * Math.PI, 4, 30, 0, 0),
+				new Move((1.0 / 2.0) * Math.PI, 2, 60, 0, 0))));
 		
 		game.rootScene.addChild(enemyX);
 		game.rootScene.addChild(enemyY);
-		
+		game.rootScene.addChild(enemyWithMoves);		
 		
 		game.rootScene.addEventListener('enterframe', function(e) {
 			updateController();
@@ -156,3 +204,29 @@ window.onload = function() {
 
 	game.start();
 }
+
+var Move = Class.create({
+	initialize: function(_direction, _speed, _duration, _bullets, _rotation) {
+		this.direction = _direction;
+		this.speed = _speed;
+		this.duration = _duration;
+		this.bullets = _bullets;
+		this.rotation = _rotation;
+	}
+});
+
+var MoveSet = Class.create({
+	initialize: function(_moves, _repeat) {
+		this.moves = _moves;
+		this.repeat = _repeat;
+		this.current = -1;
+		this.total = _moves.length;
+	},
+
+	nextMove: function() {
+		this.current++;
+		if (this.current >= this.total)
+			this.current = 0;
+		return this.moves[this.current];
+	}
+});
