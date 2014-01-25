@@ -30,6 +30,9 @@ window.onload = function() {
 		game.rootScene.addChild(bg);
 		game.rootScene.addChild(label);
 		game.rootScene.addChild(lab1);
+
+		var move = new Move(1, 2, 3, 4, 5);
+		console.log(move.direction, move.speed);
 	}
 
 	game.rootScene.addEventListener('enterframe', function(e) {
@@ -38,5 +41,32 @@ window.onload = function() {
 			lab1.text = "Button pushed!";
 		}
 	});
+
 	game.start();
 }
+
+var Move = Class.create({
+	initialize: function(_direction, _speed, _duration, _bullets, _rotation) {
+		this.direction = _direction;
+		this.speed = _speed;
+		this.duration = _duration;
+		this.bullets = _bullets;
+		this.rotation = _rotation;
+	}
+});
+
+var MoveSet = Class.create({
+	initialize: function(_moves, _repeat) {
+		this.moves = _moves;
+		this.repeat = _repeat;
+		this.current = 0;
+		this.total = _moves.length;
+	}
+
+	nextMove: function() {
+		current++;
+		if (current >= total)
+			current = 0;
+		return moves[current];
+	}
+});
