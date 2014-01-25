@@ -36,28 +36,35 @@ function updateController()
 // When document loads, set up basic game
 window.onload = function() {
 	var game = new Game(gameWidth, gameHeight);
-	game.preload('images/bg1.png', 'images/Square.png');
+	game.preload('images/bg1.png', 'images/Square.png', 'images/bullet.png');
 	
 	game.fps = 60;
 	game.scale = 1;
 
 	game.onload = function() {
-		console.log("sup guys, I'm your game");
-
-		var label, bg;
+		var label, bg, healthDisplay;
+		var bulletTimer = 30;
+		var missileExists = false;
+		var enemies = []; // all enemies
 		label = new Label("FIVE Players.  ONE Controller.");
 		label.color = 'white';
+		healthDisplay = new Label("Health: ");
+		healthDisplay.color = 'white';
+		healthDisplay.x = gameWidth - 60;
+		
 		bg = new Sprite(gameWidth, gameHeight);
 		bg.image = game.assets['images/bg1.png'];
 
 		game.rootScene.addChild(bg);
 		game.rootScene.addChild(label);
+		game.rootScene.addChild(healthDisplay);
 		
 		Ship = Class.create(Sprite, {
 			initialize: function() {
 				Sprite.call(this, 30, 30);
 				this.image = game.assets['images/Square.png'];
 				this.frame = 0;
+				this.health = 10;
 				this.x = 300;
 				this.y = 360;
 				this.addEventListener('enterframe', function() {
@@ -78,15 +85,22 @@ window.onload = function() {
 		});
 		var ship = new Ship();
 		game.rootScene.addChild(ship);
-		
+		healthDisplay.text = "Health: " + ship.health;
+				
 		var Enemy = Class.create(Sprite, {
 			initialize: function(width, height) {
 				Sprite.call(this, width, height);
 				this.frame = 0;
+				this.health = 0;
 				this.velY = 0;
 				this.velX = 0;
 			},
 			onenterframe: function() {
+				if (this.health <= 0) {
+					var i = enemies.indexOf(this);
+					enemies.splice(i, 1);
+					game.rootScene.removeChild(this);
+				}
 				if (this.y > gameHeight - this.height) {
 					this.y = gameHeight - this.height;
 					this.velY *= -1;
@@ -111,6 +125,7 @@ window.onload = function() {
 			initialize: function() {
 				Enemy.call(this, 30, 30);
 				this.image = game.assets['images/Square.png'];
+				this.health = 10;
 				this.x = 30;
 				this.y = 50;
 				this.velX = 1;
@@ -121,6 +136,7 @@ window.onload = function() {
 			initialize: function() {
 				Enemy.call(this, 30, 30);
 				this.image = game.assets['images/Square.png'];
+				this.health = 10;
 				this.x = 500;
 				this.y = 50;
 				this.velX = 1;
@@ -170,6 +186,101 @@ window.onload = function() {
 			}
 		});
 		
+		var Bullet = Class.create(Sprite, {
+			initialize: function(width, height) {
+				Sprite.call(this, width, height);
+				this.damage = 0;
+				this.frame = 0;
+				this.velX = 0;
+				this.velY = 0;
+			},
+			onenterframe: function() {
+				if (ship.intersect(this)) {
+					ship.health -= this.damage;
+					healthDisplay.text = "Health: " + ship.health;
+					game.rootScene.removeChild(this);
+				}
+				for (var j = 0; j < enemies.length; j++) {
+					if (enemies[j].intersect(this)) {
+						enemies[j].health -= this.damage;
+						game.rootScene.removeChild(this);
+					}
+				}
+				this.x += this.velX;
+				this.y += this.velY;
+				if (this.y > gameHeight || this.y < -this.height
+				 || this.x > gameWidth || this.x < -this.width) {
+					game.rootScene.removeChild(this);
+				}
+			}
+		});
+		var PlayerBullet = Class.create(Bullet, {
+			initialize: function(velocityX, velocityY) {
+				Bullet.call(this, 15, 15);
+				this.image = game.assets['images/bullet.png'];
+				this.damage = 1;
+				this.x = ship.x;
+				this.y = ship.y - 20;
+				this.velX = velocityX;
+				this.velY = velocityY;
+			}
+		});
+		var PlayerMissile = Class.create(Bullet, {
+			initialize: function(velocityX, velocityY) {
+				Bullet.call(this, 15, 15);
+				this.image = game.assets['images/bullet.png'];
+				this.timer = 0;
+				this.damage = 5;
+				this.angle = 0;
+				this.testX = 0;
+				this.testY = 0;
+				this.x = ship.x + 15;
+				this.y = ship.y - 20;
+				this.velX = velocityX;
+				this.velY = velocityY;
+			},
+			onenterframe: function() {
+				this.timer++;
+				if (ship.intersect(this) && this.timer > 30) {
+					missileExists = false;
+					ship.health -= this.damage;
+					healthDisplay.text = "Health: " + ship.health;
+					game.rootScene.removeChild(this);
+				}
+				for (var j = 0; j < enemies.length; j++) {
+					if (enemies[j].intersect(this)) {
+						missileExists = false;
+						enemies[j].health -= this.damage;
+						game.rootScene.removeChild(this);
+					}
+				}
+				this.x += this.velX;
+				this.y += this.velY;
+				if (this.y > gameHeight || this.y < -this.height
+				 || this.x > gameWidth || this.x < -this.width) {
+					missileExists = false;
+					game.rootScene.removeChild(this);
+				}
+				else {
+					updateController();
+					if (controller) {
+						if (controller.axes[Controller_Right_X_Axis] > 0.5 
+						|| controller.axes[Controller_Right_X_Axis] < -0.5
+						|| controller.axes[Controller_Right_Y_Axis] > 0.5 
+						|| controller.axes[Controller_Right_Y_Axis] < -0.5) {
+							this.angle = Math.atan(controller.axes[Controller_Right_Y_Axis] /
+							              controller.axes[Controller_Right_X_Axis]);
+							if (controller.axes[Controller_Right_X_Axis] < 0) {
+								this.angle += Math.PI;
+							}
+							this.velX = Math.cos(this.angle) * 5;
+							this.velY = Math.sin(this.angle) * 5;
+						}
+					}
+				}
+			}
+		});
+		
 		var enemyX = new EnemyX();
 		var enemyY = new EnemyY();
 
@@ -181,22 +292,34 @@ window.onload = function() {
 		
 		game.rootScene.addChild(enemyX);
 		game.rootScene.addChild(enemyY);
-		game.rootScene.addChild(enemyWithMoves);		
-		
+		game.rootScene.addChild(enemyWithMoves);
+		enemies.push(enemyX);
+		enemies.push(enemyY);
+		enemies.push(enemyWithMoves);
+				
 		game.rootScene.addEventListener('enterframe', function(e) {
+			if (ship.health <= 0) {
+				game.end();
+			}
+			bulletTimer++;
 			updateController();
 			if (controller) {
-				if (controller.axes[Controller_Left_X_Axis] > 0.1 || controller.axes[Controller_Left_X_Axis] < -0.1) {
-					ship.x += controller.axes[Controller_Left_X_Axis];
+				if (controller.axes[Controller_Left_X_Axis] > 0.5 || controller.axes[Controller_Left_X_Axis] < -0.5) {
+					ship.x += controller.axes[Controller_Left_X_Axis] * 3;
 				}
-				if (controller.axes[Controller_Left_Y_Axis] > 0.1 || controller.axes[Controller_Left_Y_Axis] < -0.1) {
-					ship.y += controller.axes[Controller_Left_Y_Axis];
+				if (controller.axes[Controller_Left_Y_Axis] > 0.5 || controller.axes[Controller_Left_Y_Axis] < -0.5) {
+					ship.y += controller.axes[Controller_Left_Y_Axis] * 3;
 				}
-				if (controller.buttons[Controller_A] === 1) {
-					ship.scaleX += .1;
+				if (controller.buttons[Controller_A] === 1 && bulletTimer >= 30) {
+					game.rootScene.addChild(new PlayerBullet(0, -5));
+					bulletTimer = 0;
 				}
-				if (controller.buttons[Controller_B] === 1) {
-					ship.scaleX -= .1;
+				if (controller.buttons[Controller_Right_Stick] === 1) {
+					if (missileExists === false) {
+						missileExists = true;
+						var y = controller.axes[Controller_Right_Y_Axis] < -0.5 ? -5 : 5;
+						game.rootScene.addChild(new PlayerMissile(0, y));
+					}
 				}
 			}
 		});
