@@ -11,13 +11,11 @@ function updateController()
 // When document loads, set up basic game
 window.onload = function() {
 	var game = new Game(600, 720);
-	game.preload('images/bg1.png');
+	game.preload('images/bg1.png', 'images/Square.png');
 	
-	game.fps = 30;
+	game.fps = 60;
 	game.scale = 1;
-	var lab1 = new Label("Hello there!");
-	lab1.y = 50;
-	lab1.color = 'white';
+
 	game.onload = function() {
 		console.log("sup guys, I'm your game");
 
@@ -29,14 +27,52 @@ window.onload = function() {
 
 		game.rootScene.addChild(bg);
 		game.rootScene.addChild(label);
-		game.rootScene.addChild(lab1);
+		
+		Ship = Class.create(Sprite, {
+			initialize: function() {
+				Sprite.call(this, 30, 30);
+				this.image = game.assets['images/Square.png'];
+				this.frame = 0;
+				this.x = 300;
+				this.y = 360;
+				this.addEventListener('enterframe', function() {
+					if (this.y < 40) {
+						this.y = 40;
+					}	
+					if (this.y > 680) {
+						this.y = 680
+					}
+					if (this.x < 40) {
+						this.x = 40;
+					}
+					if (this.x > 560) {
+						this.x = 560;
+					}
+				});
+			}
+		});
+		var ship = new Ship();
+		game.rootScene.addChild(ship);
+		
+		game.rootScene.addEventListener('enterframe', function(e) {
+			updateController();
+			console.log(ship.x + ", " + ship.y);
+			if (controller) {
+				if (controller.axes[0] > 0.1 || controller.axes[0] < -0.1) {
+					ship.x += controller.axes[0];
+				}
+				if (controller.axes[1] > 0.1 || controller.axes[1] < -0.1) {
+					ship.y += controller.axes[1];
+				}
+				if (controller.buttons[0] === 1) {
+					ship.scaleX += .1;
+				}
+				if (controller.buttons[1] === 1) {
+					ship.scaleX -= .1;
+				}
+			}
+		});
 	}
 
-	game.rootScene.addEventListener('enterframe', function(e) {
-		updateController();
-		if (controller && controller.buttons[0] == 1) {
-			lab1.text = "Button pushed!";
-		}
-	});
 	game.start();
 }
