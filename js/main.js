@@ -65,6 +65,7 @@ window.onload = function() {
 				this.image = game.assets['images/Square.png'];
 				this.frame = 0;
 				this.health = 10;
+				this.speed = 3;
 				this.x = 300;
 				this.y = 360;
 				this.addEventListener('enterframe', function() {
@@ -91,7 +92,7 @@ window.onload = function() {
 			initialize: function(width, height) {
 				Sprite.call(this, width, height);
 				this.frame = 0;
-				this.health = 0;
+				this.health = 10;
 				this.velY = 0;
 				this.velX = 0;
 			},
@@ -125,7 +126,6 @@ window.onload = function() {
 			initialize: function() {
 				Enemy.call(this, 30, 30);
 				this.image = game.assets['images/Square.png'];
-				this.health = 10;
 				this.x = 30;
 				this.y = 50;
 				this.velX = 1;
@@ -136,7 +136,6 @@ window.onload = function() {
 			initialize: function() {
 				Enemy.call(this, 30, 30);
 				this.image = game.assets['images/Square.png'];
-				this.health = 10;
 				this.x = 500;
 				this.y = 50;
 				this.velX = 1;
@@ -155,16 +154,19 @@ window.onload = function() {
 				this.y = 50;
 				this.velX = Math.cos(this.move.direction) * this.move.speed;
 				this.velY = Math.sin(this.move.direction) * this.move.speed;
-				console.log("Change move!");
 			},
 
 			onenterframe: function() {
+				if (this.health <= 0) {
+					var i = enemies.indexOf(this);
+					enemies.splice(i, 1);
+					game.rootScene.removeChild(this);
+				}
 				if (this.move_progress >= this.move.duration) {
 					this.move = this.moveset.nextMove();
 					this.move_progress = 0;
 					this.velX = Math.cos(this.move.direction) * this.move.speed;
 					this.velY = Math.sin(this.move.direction) * this.move.speed;
-					console.log("Change move!");
 				}
 
 				if (this.y > gameHeight - this.height) {
@@ -304,11 +306,17 @@ window.onload = function() {
 			bulletTimer++;
 			updateController();
 			if (controller) {
+				if (controller.buttons[Controller_Left_Stick] === 1) {
+					ship.speed = 6;
+				}
+				else {
+					ship.speed = 3;
+				}
 				if (controller.axes[Controller_Left_X_Axis] > 0.5 || controller.axes[Controller_Left_X_Axis] < -0.5) {
-					ship.x += controller.axes[Controller_Left_X_Axis] * 3;
+					ship.x += controller.axes[Controller_Left_X_Axis] * ship.speed;
 				}
 				if (controller.axes[Controller_Left_Y_Axis] > 0.5 || controller.axes[Controller_Left_Y_Axis] < -0.5) {
-					ship.y += controller.axes[Controller_Left_Y_Axis] * 3;
+					ship.y += controller.axes[Controller_Left_Y_Axis] * ship.speed;
 				}
 				if (controller.buttons[Controller_A] === 1 && bulletTimer >= 30) {
 					game.rootScene.addChild(new PlayerBullet(0, -5));
