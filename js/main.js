@@ -1,26 +1,49 @@
 // Start enchant
 enchant();
+
 //Global variables. Don't change in code
-var Controller_A = 0;
-var Controller_B = 1;
-var Controller_X = 2;
-var Controller_Y = 3;
-var Controller_Left_Bump = 4;
-var Controller_Right_Bump = 5;
-var Controller_Left_Trigger = 6;
-var Controller_Right_Trigger = 7;
-var Controller_Back = 8;
-var Controller_Start = 9;
-var Controller_Left_Stick = 10;
-var Controller_Right_Stick = 11;
-var Controller_Up_Dpad = 12;
-var Controller_Down_Dpad = 13;
-var Controller_Left_Dpad = 14;
-var Controller_Right_Dpad = 15;
-var Controller_Left_X_Axis = 0;
-var Controller_Left_Y_Axis = 1;
-var Controller_Right_X_Axis = 2;
-var Controller_Right_Y_Axis = 3;
+var controller = {
+	a: 0,
+	b: 1,
+	x: 2,
+	y: 3,
+	lb: 4,
+	rb: 5,
+	lt: 6,
+	rt: 7,
+	back: 8,
+	start: 9,
+	lstick: 10,
+	rstick: 11,
+	up: 12,
+	down: 13,
+	left: 14,
+	right: 15,
+	lstick_x : 0,
+	lstick_y : 1,
+	rstick_x : 2,
+	rstick_y : 3
+}
+// var Controller_A = 0;
+// var Controller_B = 1;
+// var Controller_X = 2;
+// var Controller_Y = 3;
+// var Controller_Left_Bump = 4;
+// var Controller_Right_Bump = 5;
+// var Controller_Left_Trigger = 6;
+// var Controller_Right_Trigger = 7;
+// var Controller_Back = 8;
+// var Controller_Start = 9;
+// var Controller_Left_Stick = 10;
+// var Controller_Right_Stick = 11;
+// var Controller_Up_Dpad = 12;
+// var Controller_Down_Dpad = 13;
+// var Controller_Left_Dpad = 14;
+// var Controller_Right_Dpad = 15;
+// var Controller_Left_X_Axis = 0;
+// var Controller_Left_Y_Axis = 1;
+// var Controller_Right_X_Axis = 2;
+// var Controller_Right_Y_Axis = 3;
 
 var gameWidth = 600;
 var gameHeight = 720;
@@ -216,6 +239,7 @@ window.onload = function() {
 				}
 			}
 		});
+
 		var PlayerBullet = Class.create(Bullet, {
 			initialize: function(velocityX, velocityY) {
 				Bullet.call(this, 15, 15);
@@ -227,6 +251,7 @@ window.onload = function() {
 				this.velY = velocityY;
 			}
 		});
+
 		var PlayerMissile = Class.create(Bullet, {
 			initialize: function(velocityX, velocityY) {
 				Bullet.call(this, 15, 15);
@@ -266,13 +291,13 @@ window.onload = function() {
 				else {
 					updateController();
 					if (controller) {
-						if (controller.axes[Controller_Right_X_Axis] > 0.5 
-						|| controller.axes[Controller_Right_X_Axis] < -0.5
-						|| controller.axes[Controller_Right_Y_Axis] > 0.5 
-						|| controller.axes[Controller_Right_Y_Axis] < -0.5) {
-							this.angle = Math.atan(controller.axes[Controller_Right_Y_Axis] /
-							              controller.axes[Controller_Right_X_Axis]);
-							if (controller.axes[Controller_Right_X_Axis] < 0) {
+						if (controller.axes[controller.rstick_x] > 0.5 
+						|| controller.axes[controller.rstick_x] < -0.5
+						|| controller.axes[controller.rstick_y] > 0.5 
+						|| controller.axes[controller.rstick_y] < -0.5) {
+							this.angle = Math.atan(controller.axes[controller.rstick_y] /
+							              controller.axes[controller.rstick_x]);
+							if (controller.axes[controller.rstick_x] < 0) {
 								this.angle += Math.PI;
 							}
 							this.velX = Math.cos(this.angle) * 5;
@@ -306,26 +331,26 @@ window.onload = function() {
 			bulletTimer++;
 			updateController();
 			if (controller) {
-				if (controller.buttons[Controller_Left_Stick] === 1) {
+				if (controller.buttons[controller.lstick] === 1) {
 					ship.speed = 6;
 				}
 				else {
 					ship.speed = 3;
 				}
-				if (controller.axes[Controller_Left_X_Axis] > 0.5 || controller.axes[Controller_Left_X_Axis] < -0.5) {
-					ship.x += controller.axes[Controller_Left_X_Axis] * ship.speed;
+				if (controller.axes[controller.lstick_x] > 0.5 || controller.axes[controller.lstick_x] < -0.5) {
+					ship.x += controller.axes[controller.lstick_x] * ship.speed;
 				}
-				if (controller.axes[Controller_Left_Y_Axis] > 0.5 || controller.axes[Controller_Left_Y_Axis] < -0.5) {
-					ship.y += controller.axes[Controller_Left_Y_Axis] * ship.speed;
+				if (controller.axes[controller.lstick_y] > 0.5 || controller.axes[controller.lstick_y] < -0.5) {
+					ship.y += controller.axes[controller.lstick_y] * ship.speed;
 				}
-				if (controller.buttons[Controller_A] === 1 && bulletTimer >= 30) {
+				if (controller.buttons[controller.a] === 1 && bulletTimer >= 30) {
 					game.rootScene.addChild(new PlayerBullet(0, -5));
 					bulletTimer = 0;
 				}
-				if (controller.buttons[Controller_Right_Stick] === 1) {
+				if (controller.buttons[controller.rstick] === 1) {
 					if (missileExists === false) {
 						missileExists = true;
-						var y = controller.axes[Controller_Right_Y_Axis] < -0.5 ? -5 : 5;
+						var y = controller.axes[controller.rstick_y] < -0.5 ? -5 : 5;
 						game.rootScene.addChild(new PlayerMissile(0, y));
 					}
 				}
@@ -337,11 +362,12 @@ window.onload = function() {
 }
 
 var Move = Class.create({
-	initialize: function(_direction, _speed, _duration, _bullets, _rotation) {
+	initialize: function(_direction, _speed, _duration, _bullets, _bulletSpeed, _rotation) {
 		this.direction = _direction;
 		this.speed = _speed;
 		this.duration = _duration;
 		this.bullets = _bullets;
+		this.bulletSpeedl = _bulletSpeed;
 		this.rotation = _rotation;
 	}
 });
