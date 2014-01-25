@@ -26,6 +26,8 @@ var gameWidth = 600;
 var gameHeight = 720;
 
 var controller = null;
+var formations = [];
+
 function updateController()
 {
 	if (navigator.webkitGetGamepads) {
