@@ -149,6 +149,11 @@ var EnemyWithMoves = Class.create(Enemy, {
 			this.velY = Math.sin(this.move.direction) * this.move.speed;
 		}
 
+		if (this.move_progress % (this.move.duration / this.move.bullets) === 0) {
+			var bullet = new EnemyBullet(this.x, this.y, 2);
+			game.rootScene.addChild(bullet);
+		}
+
 		if (this.y > gameHeight - this.height) {
 			this.y = gameHeight - this.height;
 		}
@@ -195,6 +200,28 @@ var Bullet = Class.create(Sprite, {
 		 || this.x > gameWidth || this.x < -this.width) {
 			game.rootScene.removeChild(this);
 		}
+	}
+});
+
+var EnemyBullet = Class.create(Sprite, {
+	initialize: function(_x, _y, _damage) {
+		Sprite.call(this, 8, 15);
+		this.image = getAssets()['images/bullet2.png'];
+		this.damage = _damage;
+		this.x = _x;
+		this.y = _y;
+		this.velX = 0;
+		this.velY = 5;
+	},
+
+	onenterframe: function() {
+		var ship = getShip();
+		if (ship.intersect(this)) {
+			ship.health -= this.damage;
+			game.rootScene.removeChild(this);
+		}
+		this.x += this.velX;
+		this.y += this.velY;
 	}
 });
 
@@ -271,15 +298,15 @@ var PlayerMissile = Class.create(Bullet, {
 
 var enemy_movesets = {
 	set1 : new MoveSet(new Array(
-				new Move(0, 2, 60, 0, 0),
+				new Move(0, 2, 60, 3, 0),
 				new Move((11.0 / 4.0) * Math.PI, 1.5, 30, 0, 0),
 				new Move((13.0 / 4.0) * Math.PI, 4, 30, 0, 0),
 				new Move((1.0 / 2.0) * Math.PI, 2, 60, 0, 0))),
 	set2 : new MoveSet(new Array(
-				new Move(0, 3, 40, 0, 0),
+				new Move(0, 3, 40, 4, 0),
 				new Move((15.0 / 4.0) * Math.PI, 0.5, 60, 0, 0),
 				new Move(0.5 * Math.PI, 2, 40, 0, 0),
-				new Move(Math.PI, 3, 40, 0, 0),
+				new Move(Math.PI, 3, 40, 4, 0),
 				new Move((13.0 / 4.0) * Math.PI, 0.5, 60, 0, 0),
 				new Move(0.5 * Math.PI, 2, 40, 0, 0)))
 }
@@ -307,18 +334,20 @@ function getShip() {
 	}
 }
 
+var addEnemy = function(enemy) {
+	game.rootScene.addChild(enemy);
+	enemies.push(enemy);
+};
+
 // When document loads, set up basic game
 window.onload = function() {
 	game = new Game(gameWidth, gameHeight);
-	game.preload('images/bg1.png', 'images/Square.png', 'images/bullet.png');
+	game.preload(
+		'images/bg1.png', 'images/Square.png', 'images/bullet.png',
+		'images/bullet2.png');
 	
 	game.fps = 60;
 	game.scale = 1;
-
-	var addEnemy = function(enemy) {
-		game.rootScene.addChild(enemy);
-		enemies.push(enemy);
-	};
 
 	game.getShip = function() {
 		return ship;
@@ -352,7 +381,7 @@ window.onload = function() {
 				
 		game.rootScene.addEventListener('enterframe', function(e) {
 			if (ship.health <= 0) {
-				game.end();
+				game.stop();
 			}
 			bulletTimer++;
 			updateController();
