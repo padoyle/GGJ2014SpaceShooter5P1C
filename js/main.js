@@ -54,9 +54,64 @@ window.onload = function() {
 		var ship = new Ship();
 		game.rootScene.addChild(ship);
 		
+		var Enemy = Class.create(Sprite, {
+			initialize: function(width, height) {
+				Sprite.call(this, width, height);
+				this.frame = 0;
+				this.velY = 0;
+				this.velX = 0;
+			},
+			onenterframe: function() {
+				if (this.y > 680) {
+					this.y = 680;
+					this.velY *= -1;
+				}
+				if (this.y < 40) {
+					this.y = 40;
+					this.velY *= -1;
+				}
+				if (this.x < 40) {
+					this.x = 40;
+					this.velX *= -1;
+				}
+				if (this.x > 560) {
+					this.x = 560;
+					this.velX *= -1;
+				}
+				this.x += this.velX;
+				this.y += this.velY;
+			}
+		});
+		var EnemyX = Class.create(Enemy, {
+			initialize: function() {
+				Enemy.call(this, 30, 30);
+				this.image = game.assets['images/Square.png'];
+				this.x = 20;
+				this.y = 50;
+				this.velX = 1;
+				this.velY = 3;
+			}
+		});
+		var EnemyY = Class.create(Enemy, {
+			initialize: function() {
+				Enemy.call(this, 30, 30);
+				this.image = game.assets['images/Square.png'];
+				this.x = 500;
+				this.y = 50;
+				this.velX = 1;
+				this.velY = 3;
+			}
+		});
+		
+		var enemyX = new EnemyX();
+		var enemyY = new EnemyY();
+		
+		game.rootScene.addChild(enemyX);
+		game.rootScene.addChild(enemyY);
+		
+		
 		game.rootScene.addEventListener('enterframe', function(e) {
 			updateController();
-			console.log(ship.x + ", " + ship.y);
 			if (controller) {
 				if (controller.axes[0] > 0.1 || controller.axes[0] < -0.1) {
 					ship.x += controller.axes[0];
