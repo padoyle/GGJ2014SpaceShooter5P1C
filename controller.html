@@ -1,0 +1,119 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<script>
+var controller = null;
+function printControllers()
+{
+		if (navigator.webkitGetGamepads) {
+			controller = navigator.webkitGetGamepads()[0];
+		}
+		if (!controller) {
+			return;
+		}
+		var j;
+		for (j = 0; j < controller.buttons.length; j++) {
+			if (controller.buttons[j] == 1) {
+				document.getElementById("data" + j).innerHTML = true;
+			}
+			else {
+				document.getElementById("data" + j).innerHTML = false;			
+			}
+		}
+		for (j = 0; j < controller.axes.length; j++) {
+			document.getElementById("axis" + j).innerHTML = controller.axes[j];
+		}
+		window.requestAnimationFrame(printControllers);
+}
+
+window.requestAnimationFrame(printControllers);
+</script>
+</head>
+<body>
+<button onclick="printControllers();">controllers!!</button>
+<table>
+	<tr>
+		<td>A</td>
+		<td id="data0">False</td>
+	</tr>
+	<tr>
+		<td>B</td>
+		<td id="data1">False</td>
+	</tr>
+	<tr>
+		<td>X</td>
+		<td id="data2">False</td>
+	</tr>
+	<tr>
+		<td>Y</td>
+		<td id="data3">False</td>
+	</tr>
+	<tr>
+		<td>Left Bump</td>
+		<td id="data4">False</td>
+	</tr>
+	<tr>
+		<td>Right Bump</td>
+		<td id="data5">False</td>
+	</tr>
+	<tr>
+		<td>Left Trigger</td>
+		<td id="data6">False</td>
+	</tr>
+	<tr>
+		<td>Right Trigger</td>
+		<td id="data7">False</td>
+	</tr>
+	<tr>
+		<td>Back</td>
+		<td id="data8">False</td>
+	</tr>
+	<tr>
+		<td>Start</td>
+		<td id="data9">False</td>
+	</tr>
+	<tr>
+		<td>Left Stick</td>
+		<td id="data10">False</td>
+	</tr>
+	<tr>
+		<td>Right Stick</td>
+		<td id="data11">False</td>
+	</tr>
+	<tr>
+		<td>Up Dpad</td>
+		<td id="data12">False</td>
+	</tr>
+	<tr>
+		<td>Down Dpad</td>
+		<td id="data13">False</td>
+	</tr>
+	<tr>
+		<td>Left Dpad</td>
+		<td id="data14">False</td>
+	</tr>
+	<tr>
+		<td>Right Dpad</td>
+		<td id="data15">False</td>
+	</tr>
+</table>
+<table>
+	<tr>
+		<td>Left Horizontal</td>
+		<td id="axis0">0</td>
+	</tr>
+	<tr>
+		<td>Left Vertical</td>
+		<td id="axis1">0</td>
+	</tr>
+	<tr>
+		<td>Right Horizontal</td>
+		<td id="axis2">0</td>
+	</tr>
+	<tr>
+		<td>Right Vertical</td>
+		<td id="axis3">0</td>
+	</tr>
+</body>
+</html>
