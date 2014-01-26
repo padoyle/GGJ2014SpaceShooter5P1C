@@ -640,11 +640,12 @@ var PlayerBullet = Class.create(Bullet, {
 });
 var MissileExplosion = Class.create(Sprite, {
 	initialize: function(x, y) {
-		Sprite.call(this, 100, 100);
-		this.x = x - 15;
-		this.y = y - 3;
+		Sprite.call(this, 48, 46);
+		this.x = x - 12;
+		this.y = y - 1;
 		this.opacity = 1;
 		this.damage = 20;
+		this.image = game.assets['images/explosion0.png'];
 	},
 	onenterframe: function() {
 		if (this.opacity === 1) {
@@ -655,7 +656,7 @@ var MissileExplosion = Class.create(Sprite, {
 			}
 		}
 		this.opacity -= 1/60;
-		if (this.opacity === 0) {
+		if (this.opacity <= 0) {
 			game.rootScene.removeChild(this);
 		}
 	}
@@ -818,7 +819,7 @@ window.onload = function() {
 		'images/gui_buttonAH.png', 'images/gui_buttonBH.png', 'images/gui_buttonYH.png',
 		'images/gui_buttonLH.png', 'images/gui_barHealth.png', 'images/gui_buttonHit0.png',
 		'images/gui_buttonHit1.png', 'images/gui_barTick.png', 'images/gui_barTick1.png',
-		'images/gui_barTick2.png');
+		'images/gui_barTick2.png', 'images/explosion0.png', 'images/explosion1.png');
 	
 	game.fps = 60;
 	game.scale = 1;
