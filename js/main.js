@@ -30,6 +30,7 @@ var enemies = []; // all enemies
 var ship = null;
 var healthDisplay = null;
 var missileExists = false;
+var scalingDifficultyNumber = 1;
 
 var Move = Class.create({
 	initialize: function(_direction, _speed, _duration, _bullets, _bulletSpeed, _rotation) {
@@ -89,83 +90,97 @@ Ship = Class.create(Sprite, {
 });
 
 var Enemy = Class.create(Sprite, {
-	initialize: function(width, height) {
-		Sprite.call(this, width, height);
-		this.frame = 0;
-		this.health = 10;
-		this.velY = 0;
-		this.velX = 0;
-	},
-	onenterframe: function() {
-		if (this.health <= 0) {
-			var i = enemies.indexOf(this);
-			enemies.splice(i, 1);
-			game.rootScene.removeChild(this);
-		}
-		if (this.y > gameHeight - this.height) {
-			this.y = gameHeight - this.height;
-			this.velY *= -1;
-		}
-		if (this.y < 0) {
-			this.y = 0;
-			this.velY *= -1;
-		}
-		if (this.x < 0) {
-			this.x = 0;
-			this.velX *= -1;
-		}
-		if (this.x > gameWidth - this.width) {
-			this.x = gameWidth - this.width;
-			this.velX *= -1;
-		}
-		this.x += this.velX;
-		this.y += this.velY;
-	}
+    initialize: function (width, height) {
+        Sprite.call(this, width, height);
+        this.frame = 0;
+        this.health = 10;
+        this.velY = 0;
+        this.velX = 0;
+        this.onScreen = false;
+    },
+    onenterframe: function () {
+        if (this.onScreen === false) {
+            this.y += 0.5 * scalingDifficultyNumber;
+            if (this.y >= 0) {
+                this.onScreen = true;
+            }
+        }
+        else {
+            if (this.health <= 0) {
+                var i = enemies.indexOf(this);
+                enemies.splice(i, 1);
+                game.rootScene.removeChild(this);
+            }
+            if (this.y + this.height > gameHeight) {
+            }
+            if (this.y < 0) {
+                this.y = 0;
+                this.velY *= -1;
+            }
+            if (this.x < 0) {
+                this.x = 0;
+                this.velX *= -1;
+            }
+            if (this.x > gameWidth - this.width) {
+                this.x = gameWidth - this.width;
+                this.velX *= -1;
+            }
+            this.x += this.velX;
+            this.y += this.velY;
+        }
+    }
 });
 
 var EnemyWithMoves = Class.create(Enemy, {
-	initialize: function(_moveset, _x) {
-		Enemy.call(this, 30, 30);
-		this.image = getAssets()['images/Square.png'];
-		this.moveset = _moveset;
-		this.move = this.moveset.nextMove();
-		this.move_progress = 0;
-		this.x = _x;
-		this.y = 50;
-		this.velX = Math.cos(this.move.direction) * this.move.speed;
-		this.velY = Math.sin(this.move.direction) * this.move.speed;
-	},
+    initialize: function (_x, _y, _moveset) {
+        Enemy.call(this, 30, 30);
+        this.image = getAssets()['images/Square.png'];
+        this.moveset = _moveset;
+        this.move = this.moveset.nextMove();
+        this.move_progress = 0;
+        this.x = _x;
+        this.y = _y;
+        this.velX = Math.cos(this.move.direction) * this.move.speed;
+        this.velY = Math.sin(this.move.direction) * this.move.speed;
+    },
 
-	onenterframe: function() {
-		if (this.health <= 0) {
-			var i = enemies.indexOf(this);
-			enemies.splice(i, 1);
-			game.rootScene.removeChild(this);
-		}
-		if (this.move_progress >= this.move.duration) {
-			this.move = this.moveset.nextMove();
-			this.move_progress = 0;
-			this.velX = Math.cos(this.move.direction) * this.move.speed;
-			this.velY = Math.sin(this.move.direction) * this.move.speed;
-		}
+    onenterframe: function () {
+        if (this.onScreen === false) {
+            this.y += 0.5 * scalingDifficultyNumber;
+            if (this.y >= 0) {
+                this.onScreen = true;
+            }
+        }
+        else {
+            if (this.health <= 0) {
+                var i = enemies.indexOf(this);
+                enemies.splice(i, 1);
+                game.rootScene.removeChild(this);
+            }
+            if (this.move_progress >= this.move.duration) {
+                this.move = this.moveset.nextMove();
+                this.move_progress = 0;
+                this.velX = Math.cos(this.move.direction) * this.move.speed;
+                this.velY = Math.sin(this.move.direction) * this.move.speed;
+            }
 
-		if (this.y > gameHeight - this.height) {
-			this.y = gameHeight - this.height;
-		}
-		if (this.y < 0) {
-			this.y = 0;
-		}
-		if (this.x < 0) {
-			this.x = 0;
-		}
-		if (this.x > gameWidth - this.width) {
-			this.x = gameWidth - this.width;
-		}
-		this.x += this.velX;
-		this.y += this.velY;
+            if (this.y > gameHeight) {
+            }
+            if (this.y < 0) {
+                this.y = 0;
+            }
+            if (this.x < 0) {
+                this.x = 0;
+            }
+            if (this.x > gameWidth - this.width) {
+                this.x = gameWidth - this.width;
+            }
+            this.x += this.velX;
+            this.y += this.velY;
 
-		this.move_progress++;
-	}
+            this.move_progress++;
+        }
+    }
 });
 
 var Bullet = Class.create(Sprite, {
@@ -184,7 +199,7 @@ var Bullet = Class.create(Sprite, {
 			game.rootScene.removeChild(this);
 		}
 		for (var j = 0; j < enemies.length; j++) {
-			if (enemies[j].intersect(this)) {
+			if (enemies[j].intersect(this) && enemies[j].onScreen) {
 				enemies[j].health -= this.damage;
 				game.rootScene.removeChild(this);
 			}
@@ -236,7 +251,7 @@ var PlayerMissile = Class.create(Bullet, {
 			game.rootScene.removeChild(this);
 		}
 		for (var j = 0; j < enemies.length; j++) {
-			if (enemies[j].intersect(this)) {
+			if (enemies[j].intersect(this) && enemies[j].onScreen) {
 				missileExists = false;
 				enemies[j].health -= this.damage;
 				game.rootScene.removeChild(this);
@@ -309,82 +324,92 @@ function getShip() {
 	}
 }
 
+var addEnemy = function (enemy) {
+    game.rootScene.addChild(enemy);
+    enemies.push(enemy);
+};
+
 // When document loads, set up basic game
-window.onload = function() {
-	game = new Game(gameWidth, gameHeight);
-	game.preload('images/bg1.png', 'images/Square.png', 'images/bullet.png');
-	
-	game.fps = 60;
-	game.scale = 1;
+window.onload = function () {
+    game = new Game(gameWidth, gameHeight);
+    game.preload('images/bg1.png', 'images/Square.png', 'images/bullet.png');
 
-	var addEnemy = function(enemy) {
-		game.rootScene.addChild(enemy);
-		enemies.push(enemy);
-	};
+    game.fps = 60;
+    game.scale = 1;
 
-	game.getShip = function() {
-		return ship;
-	}
+    game.getShip = function () {
+        return ship;
+    }
 
-	game.onload = function() {
-		var label, bg;
-		var bulletTimer = 30;
-		label = new Label("FIVE Players.  ONE Controller.");
-		label.color = 'white';
-		healthDisplay = new Label("Health: ");
-		healthDisplay.color = 'white';
-		healthDisplay.x = gameWidth - 60;
-		
-		bg = new Sprite(gameWidth, gameHeight);
-		bg.image = game.assets['images/bg1.png'];
+    game.onload = function () {
+        var label, bg;
+        var bulletTimer = 30;
+        label = new Label("FIVE Players.  ONE Controller.");
+        label.color = 'white';
+        healthDisplay = new Label("Health: ");
+        healthDisplay.color = 'white';
+        healthDisplay.x = gameWidth - 60;
 
-		game.rootScene.addChild(bg);
-		game.rootScene.addChild(label);
-		game.rootScene.addChild(healthDisplay);
+        bg = new Sprite(gameWidth, gameHeight);
+        bg.image = game.assets['images/bg1.png'];
 
-		ship = new Ship();
-		game.rootScene.addChild(ship);
-		healthDisplay.text = "Health: " + ship.health;
+        game.rootScene.addChild(bg);
+        game.rootScene.addChild(label);
+        game.rootScene.addChild(healthDisplay);
 
-		addEnemy(new EnemyWithMoves(enemy_movesets.set2.clone(), 75));
-		addEnemy(new EnemyWithMoves(enemy_movesets.set1.clone(), 150));
-		addEnemy(new EnemyWithMoves(enemy_movesets.set2.clone(), 225));
-		addEnemy(new EnemyWithMoves(enemy_movesets.set1.clone(), 300));
-		addEnemy(new EnemyWithMoves(enemy_movesets.set2.clone(), 375));
-				
-		game.rootScene.addEventListener('enterframe', function(e) {
-			if (ship.health <= 0) {
-				game.end();
-			}
-			bulletTimer++;
-			updateController();
-			if (controller) {
-				if (controller.buttons[CONT_INPUT.lstick] === 1) {
-					ship.speed = 6;
-				}
-				else {
-					ship.speed = 3;
-				}
-				if (controller.axes[CONT_INPUT.lstick_x] > 0.5 || controller.axes[CONT_INPUT.lstick_x] < -0.5) {
-					ship.x += controller.axes[CONT_INPUT.lstick_x] * ship.speed;
-				}
-				if (controller.axes[CONT_INPUT.lstick_y] > 0.5 || controller.axes[CONT_INPUT.lstick_y] < -0.5) {
-					ship.y += controller.axes[CONT_INPUT.lstick_y] * ship.speed;
-				}
-				if (controller.buttons[CONT_INPUT.a] === 1 && bulletTimer >= 30) {
-					game.rootScene.addChild(new PlayerBullet(0, -5));
-					bulletTimer = 0;
-				}
-				if (controller.buttons[CONT_INPUT.rstick] === 1) {
-					if (missileExists === false) {
-						missileExists = true;
-						var y = controller.axes[CONT_INPUT.rstick_y] < -0.5 ? -5 : 5;
-						game.rootScene.addChild(new PlayerMissile(0, y));
-					}
-				}
-			}
-		});
-	}
+        ship = new Ship();
+        game.rootScene.addChild(ship);
+        healthDisplay.text = "Health: " + ship.health;
 
-	game.start();
+        addEnemy(new EnemyWithMoves(75, 30, enemy_movesets.set2.clone()));
+        addEnemy(new EnemyWithMoves(150, 30, enemy_movesets.set1.clone()));
+        addEnemy(new EnemyWithMoves(225, 30, enemy_movesets.set2.clone()));
+        addEnemy(new EnemyWithMoves(300, 30, enemy_movesets.set1.clone()));
+        addEnemy(new EnemyWithMoves(375, 30, enemy_movesets.set2.clone()));
+
+        game.rootScene.addEventListener('enterframe', function (e) {
+            if (ship.health <= 0) {
+                game.end();
+            }
+            bulletTimer++;
+            updateController();
+            if (enemies[enemies.length - 1].onScreen) {
+                LoadFormation0();
+            }
+            for (i = 0; i < enemies.length; i++) {
+                if (enemies[i].y > gameHeight) {
+                    game.rootScene.removeChild(enemies[i]);
+                    enemies.splice(i, 1);
+                    i--;
+                }
+            }
+            if (controller) {
+                if (controller.buttons[CONT_INPUT.lstick] === 1) {
+                    ship.speed = 6;
+                }
+                else {
+                    ship.speed = 3;
+                }
+                if (controller.axes[CONT_INPUT.lstick_x] > 0.5 || controller.axes[CONT_INPUT.lstick_x] < -0.5) {
+                    ship.x += controller.axes[CONT_INPUT.lstick_x] * ship.speed;
+                }
+                if (controller.axes[CONT_INPUT.lstick_y] > 0.5 || controller.axes[CONT_INPUT.lstick_y] < -0.5) {
+                    ship.y += controller.axes[CONT_INPUT.lstick_y] * ship.speed;
+                }
+                if (controller.buttons[CONT_INPUT.a] === 1 && bulletTimer >= 30) {
+                    game.rootScene.addChild(new PlayerBullet(0, -5));
+                    bulletTimer = 0;
+                }
+                if (controller.buttons[CONT_INPUT.rstick] === 1) {
+                    if (missileExists === false) {
+                        missileExists = true;
+                        var y = controller.axes[CONT_INPUT.rstick_y] < -0.5 ? -5 : 5;
+                        game.rootScene.addChild(new PlayerMissile(0, y));
+                    }
+                }
+            }
+        });
+    }
+
+    game.start();
 }
