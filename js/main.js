@@ -308,6 +308,13 @@ Ship = Class.create(Sprite, {
 		}
 		return false;
 	},
+	drainComponent: function(clazz, _amount) {
+		for (var t = 0; t < this.component.length; t++) {
+			if (this.components[t] instanceof clazz) {
+				this.components[t].drainEnergy(_amount);
+			}
+		}
+	}
 	drawComponents: function() {
 		for (var w = 0; w < this.components.length; w++) {
 			if (this.components[w]) {
@@ -422,7 +429,7 @@ var Enemy2 = Class.create(Enemy, {
 var Enemy3 = Class.create(Enemy, {
 	initialize: function(_x, _y) {
 		Enemy.call(this, enemy_movesets.set3.clone(), _x, _y);
-		this.image = getAssets()['images/enemy3.png'];
+		this.image = getAssets()['images/enemy3_2.png'];
 	}
 });
 
@@ -667,7 +674,7 @@ window.onload = function() {
 		'images/player_missile.png', 'images/playerShip1.png', 'images/player_shield.png',
 		'images/pulse.png', 'sounds/Inception.mp3', 'images/playerShip_base.png',
 		'images/playerShip_drive.png', 'images/playerShip_generator.png', 'images/playerShip_guns.png',
-		'images/playerShip_missile.png', 'images/playerShip_shields.png', 'images/enemy3.png',
+		'images/playerShip_missile.png', 'images/playerShip_shields.png', 'images/enemy3_2.png',
 		'images/gui_barFrame.png', 'images/gui_barRed.png', 'images/gui_barGreen.png',
 		'images/gui_barYellow0.png', 'images/gui_barBlue.png', 'images/gui_barGray.png',
 		'images/gui_buttonR.png', 'images/gui_buttonL.png', 'images/gui_buttonA.png',
@@ -827,6 +834,7 @@ window.onload = function() {
 						if (ships[k].checkComponent(GunImage)) {
 							game.rootScene.addChild(new PlayerBullet(ships[k].x + ships[k].width/2, ships[k].y, k));
 							ships[k].bulletTimer = 0;
+							ships[k].
 						}
 					}
 					if (controllers[k].buttons[CONT_INPUT.a] === 1 && ships[k].shield === null) {
