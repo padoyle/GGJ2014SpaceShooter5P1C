@@ -577,6 +577,7 @@ var PlayerBullet = Class.create(Bullet, {
 		this.image = getAssets()['images/player_bullet.png'];
 		this.damage = 1;
 		this.angle = angle;
+		this.rotate(90 + (180 * angle) / Math.PI);
 		this.x = _x - this.width/2;
 		this.y = _y - this.height;
 		this.velX = 10 * Math.cos(this.angle);
@@ -915,15 +916,19 @@ window.onload = function() {
 						if (ships[k].checkComponent(GunImage)) {
 							if (barRed.filling.power === 100) {
 								game.rootScene.addChild(new PlayerBullet(ships[k].x + ships[k].width/2, ships[k].y, -Math.PI / 2, k));
-								game.rootScene.addChild(new PlayerBullet(ships[k].x + ships[k].width/2, ships[k].y, -Math.PI * 3 / 8, k));
+								game.rootScene.addChild(new PlayerBullet(ships[k].x + ships[k].width/2, ships[k].y, -Math.PI * 7 / 16, k));
+								game.rootScene.addChild(new PlayerBullet(ships[k].x + ships[k].width/2, ships[k].y, -Math.PI * 5 / 16, k));
 								game.rootScene.addChild(new PlayerBullet(ships[k].x + ships[k].width/2, ships[k].y, -Math.PI / 4, k));
-								game.rootScene.addChild(new PlayerBullet(ships[k].x + ships[k].width/2, ships[k].y, -Math.PI * 5 / 8, k));
+								game.rootScene.addChild(new PlayerBullet(ships[k].x + ships[k].width/2, ships[k].y, -Math.PI * 9 / 16, k));
+								game.rootScene.addChild(new PlayerBullet(ships[k].x + ships[k].width/2, ships[k].y, -Math.PI * 11 / 16, k));
 								game.rootScene.addChild(new PlayerBullet(ships[k].x + ships[k].width/2, ships[k].y, -Math.PI * 3 / 4, k));
 								ships[k].bulletTimer = 0;
 								barRed.filling.addValue(-25);
 							}
 							else {
 								game.rootScene.addChild(new PlayerBullet(ships[k].x + ships[k].width/2, ships[k].y, -Math.PI / 2, k));
+								game.rootScene.addChild(new PlayerBullet(ships[k].x + ships[k].width/2, ships[k].y, -Math.PI * 0.42, k));
+								game.rootScene.addChild(new PlayerBullet(ships[k].x + ships[k].width/2, ships[k].y, -Math.PI * 0.58, k));
 								ships[k].bulletTimer = 0;
 								barRed.filling.addValue(-10);
 							}
