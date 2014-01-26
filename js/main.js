@@ -30,6 +30,7 @@ var enemies = []; // all enemies
 var ships = []; // all ships
 var healthDisplays = [];
 var missileExists = [false, false, false, false];
+var scalingDifficultyNumber = 1;
 
 var Move = Class.create({
 	initialize: function(_direction, _speed, _duration, _bullets, _bulletSpeed, _rotation) {
@@ -207,7 +208,7 @@ var Bullet = Class.create(Sprite, {
 			}
 		}
 		for (var j = 0; j < enemies.length; j++) {
-			if (enemies[j].intersect(this)) {
+			if (enemies[j].intersect(this) && enemies[j].onScreen) {
 				enemies[j].health -= this.damage;
 				game.rootScene.removeChild(this);
 			}
@@ -288,7 +289,7 @@ var PlayerMissile = Class.create(Bullet, {
 		}
 		
 		for (var j = 0; j < enemies.length; j++) {
-			if (enemies[j].intersect(this)) {
+			if (enemies[j].intersect(this) && enemies[j].onScreen) {
 				missileExists[this.controller] = false;
 				enemies[j].health -= this.damage;
 				game.rootScene.removeChild(this);
@@ -321,6 +322,9 @@ var PlayerMissile = Class.create(Bullet, {
 
 var gameWidth = 600;
 var gameHeight = 720;
+
+var controller = null;
+var formations = [];
 
 var controllers = [];
 function updateControllers()
@@ -439,6 +443,5 @@ window.onload = function() {
 			}
 		});
 	}
-
-	game.start();
+    game.start();
 }
