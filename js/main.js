@@ -57,13 +57,24 @@ var Ticker = Class.create(Sprite, {
 		this.x = x;
 		this.y = y + 3;
 		this.speed = 4;
-		this.missTimer = 120;
-		this.image = game.assets['images/gui_barTick.png'];
+		this.missTimer = 0;
+		this.colorTimer = 0;
+		this.neutImage = game.assets['images/gui_barTick.png'];
+		this.goodImage = game.assets['images/gui_barTick1.png'];
+		this.badImage = game.assets['images/gui_barTick2.png'];
+		this.image = this.neutImage;
 	},
-	enterframe: function() {
-		if (this.missTimer < 120) {
-			this.missTimer = 120;
+	onenterframe: function() {
+		if (this.missTimer > 0) {
+			this.missTimer--;
 		}
+		if (this.colorTimer > 0) {
+			this.colorTimer--;
+		}
+		if (this.colorTimer === 0) {
+			this.image = this.neutImage;
+		}
+		//CHANGE SPEED BASED ON TOTAL ENERGY
 	}
 });
 var Filling = Class.create(Sprite, {
@@ -77,7 +88,8 @@ var Filling = Class.create(Sprite, {
 		this.isYellow = isYellow;
 		this.x = x + 3;
 		this.y = y + 3;
-		this.speed = 2;
+		this.speed = 1;
+		this.released = true;
 		this.minX = x;
 		this.maxX = x + 112; // These are used for yellow bar
 		this.ticker = new Ticker(x, y);
@@ -99,18 +111,29 @@ var Filling = Class.create(Sprite, {
 		}
 	},
 	checkticker: function() {
-		if (this.isYellow) {
+		if (this.isYellow && this.ticker.missTimer === 0 && this.released === true) {
 			if (this.ticker.intersect(this)) {
-				return "hit";
+				this.ticker.image = this.ticker.goodImage;
+				this.ticker.colorTimer = 30;
+				//ADD ENERGYYYYY
 			}
 			else if (Math.abs(this.ticker.x - this.x) < 20) {
-				return "near";
+				this.ticker.image = this.ticker.goodImage;
+				this.ticker.colorTimer = 30;
+				//ADD ENERGYYYYY
 			}
 			else {
-				return "miss";
+				this.ticker.colorTimer = 60;
+				this.ticker.missTimer = 60;
+				this.ticker.image = this.ticker.badImage;
 			}
+			this.released = false;
 		}
-		return "Not Yellow";
+	},
+	releaseticker: function() {
+		if (this.isYellow) {
+			this.released = true;
+		}
 	}
 });
 var HitImage = Class.create(Sprite, {
@@ -165,6 +188,7 @@ var Bar = Class.create(Sprite, {
 		this.y = y;
 		this.image = game.assets['images/gui_barFrame.png'];
 		this.filling;
+		this.filling2;
 		this.button;
 	}
 });
@@ -681,7 +705,8 @@ window.onload = function() {
 		'images/gui_buttonY.png', 'images/gui_buttonB.png', 'images/gui_buttonRH.png',
 		'images/gui_buttonAH.png', 'images/gui_buttonBH.png', 'images/gui_buttonYH.png',
 		'images/gui_buttonLH.png', 'images/gui_barHealth.png', 'images/gui_buttonHit0.png',
-		'images/gui_buttonHit1.png', 'images/gui_barTick.png');
+		'images/gui_buttonHit1.png', 'images/gui_barTick.png', 'images/gui_barTick1.png',
+		'images/gui_barTick2.png');
 	
 	game.fps = 60;
 	game.scale = 1;
@@ -708,6 +733,8 @@ window.onload = function() {
 		barYellow = new Bar(245, gameHeight - 50);
 		barYellow.filling = new Filling(barYellow.x, barYellow.y, true);
 		barYellow.filling.image = game.assets['images/gui_barYellow0.png'];
+		barYellow.filling2 = new Filling(barYellow.x, barYellow.y, false);
+		barYellow.filling2.image = game.assets['images/gui_barGray.png'];
 		
 		barYellow.button = new ButtonIcon(barYellow.x, barYellow.y, CONT_INPUT.y);
 		barYellow.button.passiveImage = game.assets['images/gui_buttonY.png'];
@@ -740,6 +767,7 @@ window.onload = function() {
 		game.rootScene.addChild(barRed.filling);
 		game.rootScene.addChild(barRed.button);
 		game.rootScene.addChild(barYellow);
+		game.rootScene.addChild(barYellow.filling2);
 		game.rootScene.addChild(barYellow.filling);
 		game.rootScene.addChild(barYellow.button);
 		game.rootScene.addChild(barYellow.filling.ticker);
@@ -852,9 +880,13 @@ window.onload = function() {
 					}
 					if (controllers[k].buttons[CONT_INPUT.y] === 1) {
 						if (ships[k].checkComponent(GeneratorImage)) {
-							console.log(barYellow.filling.checkticker());
+							barYellow.filling.checkticker();
 						}
-						
+					}
+					else if (controllers[k].buttons[CONT_INPUT.y] === 0 && barYellow.filling.released === false){
+						if (ships[k].checkComponent(GeneratorImage)) {
+							barYellow.filling.releaseticker();
+						}
 					}
 				}
 			}
