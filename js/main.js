@@ -144,65 +144,74 @@ var Shield = Class.create(Sprite, {
 });
 
 var Enemy = Class.create(Sprite, {
-	initialize: function(_moveset, _x) {
-		Sprite.call(this, 50, 50);
-		this.frame = 0;
-		this.moveset = _moveset;
-		this.move = this.moveset.nextMove();
-		this.move_progress = 0;
-		this.x = _x;
-		this.y = 50;
-		this.velX = Math.cos(this.move.direction) * this.move.speed;
-		this.velY = Math.sin(this.move.direction) * this.move.speed;
-	},
+    initialize: function (_moveset, _x, _y) {
+        Sprite.call(this, 50, 50);
+        this.frame = 0;
+        this.moveset = _moveset;
+        this.move = this.moveset.nextMove();
+        this.move_progress = 0;
+        this.x = _x;
+        this.y = _y;
+        this.velX = Math.cos(this.move.direction) * this.move.speed;
+        this.velY = Math.sin(this.move.direction) * this.move.speed;
+        this.onScreen = false;
+    },
 
-	onenterframe: function() {
-		if (this.health <= 0) {
-			var i = enemies.indexOf(this);
-			enemies.splice(i, 1);
-			game.rootScene.removeChild(this);
-		}
-		if (this.move_progress >= this.move.duration) {
-			this.move = this.moveset.nextMove();
-			this.move_progress = 0;
-			this.velX = Math.cos(this.move.direction) * this.move.speed;
-			this.velY = Math.sin(this.move.direction) * this.move.speed;
-		}
+    onenterframe: function () {
+        if (this.onScreen === false) {
+            this.y += 0.5 * scalingDifficultyNumber;
+            if (this.y >= 0) {
+                this.onScreen = true;
+            }
+        }
+        else {
+            if (this.health <= 0) {
+                var i = enemies.indexOf(this);
+                enemies.splice(i, 1);
+                game.rootScene.removeChild(this);
+            }
+            if (this.move_progress >= this.move.duration) {
+                this.move = this.moveset.nextMove();
+                this.move_progress = 0;
+                this.velX = Math.cos(this.move.direction) * this.move.speed;
+                this.velY = Math.sin(this.move.direction) * this.move.speed;
+            }
 
-		if (this.move_progress % (this.move.duration / this.move.bullets) === 0) {
-			var bullet = new EnemyBullet(this.x + this.width/2, this.y + this.height/2, 2);
-			game.rootScene.addChild(bullet);
-		}
+            if (this.move_progress % (this.move.duration / this.move.bullets) === 0) {
+                var bullet = new EnemyBullet(this.x + this.width / 2, this.y + this.height / 2, 2);
+                game.rootScene.addChild(bullet);
+            }
 
-		if (this.y > gameHeight - this.height) {
-			this.y = gameHeight - this.height;
-		}
-		if (this.y < 0) {
-			this.y = 0;
-		}
-		if (this.x < 0) {
-			this.x = 0;
-		}
-		if (this.x > gameWidth - this.width) {
-			this.x = gameWidth - this.width;
-		}
-		this.x += this.velX;
-		this.y += this.velY;
+            if (this.y > gameHeight) {
+            }
 
-		this.move_progress++;
-	}
+            if (this.y < 0) {
+                this.y = 0;
+            }
+            if (this.x < 0) {
+                this.x = 0;
+            }
+            if (this.x > gameWidth - this.width) {
+                this.x = gameWidth - this.width;
+            }
+            this.x += this.velX;
+            this.y += this.velY;
+
+            this.move_progress++;
+        }
+    }
 });
 
 var Enemy1 = Class.create(Enemy, {
-	initialize: function(_x) {
-		Enemy.call(this, enemy_movesets.set1.clone(), _x);
+	initialize: function(_x, _y) {
+		Enemy.call(this, enemy_movesets.set1.clone(), _x, _y);
 		this.image = getAssets()['images/enemy1.png'];
 	}
 });
 
 var Enemy2 = Class.create(Enemy, {
-	initialize: function(_x) {
-		Enemy.call(this, enemy_movesets.set2.clone(), _x);
+	initialize: function(_x, _y) {
+		Enemy.call(this, enemy_movesets.set2.clone(), _x, _y);
 		this.image = getAssets()['images/enemy2.png'];
 	}
 });
@@ -417,11 +426,11 @@ window.onload = function() {
 		healthDisplay.color = 'white';
 		healthDisplay.x = gameWidth - 60;
 
-		addEnemy(new Enemy1(75));
-		addEnemy(new Enemy1(225));
-		addEnemy(new Enemy1(375));
-		addEnemy(new Enemy2(150));
-		addEnemy(new Enemy2(300));
+		addEnemy(new Enemy1(75, 30));
+		addEnemy(new Enemy1(225, 30));
+		addEnemy(new Enemy1(375, 30));
+		addEnemy(new Enemy2(150, 30));
+		addEnemy(new Enemy2(300, 30));
 				
 		game.rootScene.addEventListener('enterframe', function(e) {
 			var gameOver = true;
@@ -436,6 +445,18 @@ window.onload = function() {
 				game.stop();
 			}
 			updateControllers();
+
+			if (enemies[enemies.length - 1].onScreen) {
+			    LoadFormation0();
+			}
+			for (i = 0; i < enemies.length; i++) {
+			    if (enemies[i].y > gameHeight) {
+			        game.rootScene.removeChild(enemies[i]);
+			        enemies.splice(i, 1);
+			        i--;
+			    }
+			}
+
 			for (var k = 0; controllers[k] !== undefined; k++) {
 				if (ships[k] === null) {
 					continue;
