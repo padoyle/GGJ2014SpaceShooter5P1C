@@ -110,6 +110,18 @@ var Filling = Class.create(Sprite, {
 			this.power = 100;
 		}
 		if (this.power < 0) {
+			if (barRed.filling.power > 0) {
+				barRed.filling.addValue(-1);
+			}
+			if (barGreen.filling.power > 0) {
+				barGreen.filling.addValue(-1);
+			}
+			if (barBlue.filling.power > 0) {
+				barBlue.filling.addValue(-1);
+			}
+			if (barGray.filling.power > 0) {
+				barGray.filling.addValue(-1);
+			}
 			this.power = 0;
 		}
 	},
@@ -898,7 +910,7 @@ window.onload = function() {
 						ships[k].y += controllers[k].axes[CONT_INPUT.lstick_y] * ships[k].speed;
 						ships[k].updateComponents();
 					}
-					if (controllers[k].buttons[CONT_INPUT.b] === 1 && ships[k].bulletTimer >= 10 && barRed.filling.power >= 20) {
+					if (controllers[k].buttons[CONT_INPUT.b] === 1 && ships[k].bulletTimer >= 10) {
 						if (ships[k].checkComponent(GunImage)) {
 							if (barRed.filling.power === 100) {
 								game.rootScene.addChild(new PlayerBullet(ships[k].x + ships[k].width/2, ships[k].y, -Math.PI / 2, k));
@@ -926,12 +938,6 @@ window.onload = function() {
 						}
 						else {
 							barGreen.filling.addValue(-3);
-						}
-						if (barGreen.filling.power === 0) {
-							if (ships[k].shield !== null) {
-								game.rootScene.removeChild(ships[k].shield);
-								ships[k].shield = null;
-							}
 						}
 					}
 					else if (controllers[k].buttons[CONT_INPUT.a] === 0) {
