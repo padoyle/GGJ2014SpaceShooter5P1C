@@ -552,6 +552,14 @@ var Enemy10 = Class.create(Enemy, {
     }
 });
 
+var Enemy11 = Class.create(Enemy, {
+    initialize: function (_x, _y) {
+        Enemy.call(this, enemy_movesets.set12.clone(), _x, _y);
+        this.image = getAssets()['images/enemy1.png'];
+        this.health = 6;
+    }
+});
+
 var pickFormation = function () {
     var random = Math.random() * (functions.length - 1);
     random = Math.floor(random);
@@ -630,7 +638,7 @@ var PlayerBullet = Class.create(Bullet, {
 	initialize: function(_x, _y, angle, shipNum) {
 		Bullet.call(this, 16, 28);
 		this.image = getAssets()['images/player_bullet.png'];
-		this.damage = 1;
+		this.damage = 2;
 		this.angle = angle;
 		this.rotate(90 + (180 * angle) / Math.PI);
 		this.x = _x - this.width/2;
@@ -968,9 +976,11 @@ window.onload = function() {
 							if (barRed.filling.power === 100) {
 								game.rootScene.addChild(new PlayerBullet(ships[k].x + ships[k].width/2, ships[k].y, -Math.PI / 2, k));
 								game.rootScene.addChild(new PlayerBullet(ships[k].x + ships[k].width/2, ships[k].y, -Math.PI * 7 / 16, k));
+								game.rootScene.addChild(new PlayerBullet(ships[k].x + ships[k].width/2, ships[k].y, -Math.PI * 3 / 8, k));
 								game.rootScene.addChild(new PlayerBullet(ships[k].x + ships[k].width/2, ships[k].y, -Math.PI * 5 / 16, k));
 								game.rootScene.addChild(new PlayerBullet(ships[k].x + ships[k].width/2, ships[k].y, -Math.PI / 4, k));
 								game.rootScene.addChild(new PlayerBullet(ships[k].x + ships[k].width/2, ships[k].y, -Math.PI * 9 / 16, k));
+								game.rootScene.addChild(new PlayerBullet(ships[k].x + ships[k].width/2, ships[k].y, -Math.PI * 5 / 8, k));
 								game.rootScene.addChild(new PlayerBullet(ships[k].x + ships[k].width/2, ships[k].y, -Math.PI * 11 / 16, k));
 								game.rootScene.addChild(new PlayerBullet(ships[k].x + ships[k].width/2, ships[k].y, -Math.PI * 3 / 4, k));
 								ships[k].bulletTimer = 0;

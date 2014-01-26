@@ -124,5 +124,10 @@ var enemy_movesets = {
                 new Move(0, 0, 0, 2, 90),
                 new Move(0.6 * Math.PI, 2.4, 10, 0, 0),
                 new Move(1.5 * Math.PI, 1.5, 40, 3, 90),
-                new Move(0, 0, 0, 2, 90)))
+                new Move(0, 0, 0, 2, 90))),
+    set12: new MoveSet(new Array(
+    			new Move(0.5 * Math.PI, 3, 30, 0, 0),
+    			new Move(0, 3, 180, 45, 90),
+    			new Move(0.5 * Math.PI, 3, 30, 0, 0),    			
+    			new Move(Math.PI, 3, 180, 45, 90)))
 };
