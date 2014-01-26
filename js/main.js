@@ -62,6 +62,20 @@ var MoveSet = Class.create({
 	}
 });
 
+var BG = Class.create(Sprite, {
+	initialize: function() {
+		Sprite.call(this, gameWidth, gameHeight * 2);
+		this.x = 0;
+		this.y = -gameHeight;
+	},
+	onenterframe: function() {
+		this.y += 1;
+		if (this.y > 0) {
+			this.y = -gameHeight;
+		}
+	}
+});
+
 Ship = Class.create(Sprite, {
 	initialize: function(x, shipNum) {
 		Sprite.call(this, 30, 30);
@@ -222,12 +236,13 @@ var EnemyBullet = Class.create(Sprite, {
 		this.velX = 0;
 		this.velY = 5;
 	},
-
 	onenterframe: function() {
-		var ship = getShip();
-		if (ship.intersect(this)) {
-			ship.health -= this.damage;
-			game.rootScene.removeChild(this);
+		var ships = getShip();
+		for (var k = 0; ships[k] !== undefined; k++) {
+			if (ships[k].intersect(this)) {
+				ships[k].health -= this.damage;
+				game.rootScene.removeChild(this);
+			}
 		}
 		this.x += this.velX;
 		this.y += this.velY;
@@ -369,7 +384,7 @@ window.onload = function() {
 		label.color = 'white';
 
 		
-		bg = new Sprite(gameWidth, gameHeight);
+		bg = new BG();
 		bg.image = game.assets['images/bg1.png'];
 
 		game.rootScene.addChild(bg);
