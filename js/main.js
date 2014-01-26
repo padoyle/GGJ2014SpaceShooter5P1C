@@ -160,6 +160,7 @@ var Filling = Class.create(Sprite, {
 		if (this.color === "yellow" && this.ticker.missTimer === 0 && this.released === true) {
 			if (this.ticker.intersect(this)) {
 				this.ticker.image = this.ticker.goodImage;
+				barYellow.flashGreen();
 				this.ticker.colorTimer = 30;
 				barRed.filling.addValue(30);
 				barGreen.filling.addValue(30);
@@ -169,6 +170,7 @@ var Filling = Class.create(Sprite, {
 			else if (Math.abs((this.ticker.x + this.ticker.width / 2)
 							 - (this.x + this.width / 2)) < 20) {
 				this.ticker.image = this.ticker.goodImage;
+				barYellow.flashGreen();
 				this.ticker.colorTimer = 30;
 				barRed.filling.addValue(5);
 				barGreen.filling.addValue(5);
@@ -176,6 +178,7 @@ var Filling = Class.create(Sprite, {
 				barBlue.filling.addValue(5);
 			}
 			else {
+				barYellow.flashRed();
 				this.ticker.colorTimer = 60;
 				this.ticker.missTimer = 60;
 				this.ticker.image = this.ticker.badImage;
@@ -239,10 +242,49 @@ var Bar = Class.create(Sprite, {
 		Sprite.call(this, 131, 29);
 		this.x = x;
 		this.y = y;
-		this.image = game.assets['images/gui_barFrame.png'];
 		this.filling;
 		this.filling2;
+		this.greenFlash = null;
+		this.redFlash = null;
+		this.noFlash = null;
+		this.neutral = game.assets['images/gui_barFrame.png'];
+		this.image = this.neutral;
+		this.good = true;
 		this.button;
+		this.timer = 0;
+	},
+	onenterframe: function() {
+		if (this.timer === 0) {
+			this.image = this.neutral;
+		}
+		else {
+			this.timer--;
+			if (this.timer % 10 === 0) {
+				if (this.good) {
+					this.image = this.greenFlash;
+				}
+				else {
+					this.image = this.redFlash;
+				}
+			}
+			else if (this.timer % 5 === 0) {
+				this.image = this.noFlash;
+			}
+		}
+	},
+	flashGreen: function() {
+		if (this.greenFlash !== null) {
+			this.timer = 30;
+			this.good = true;
+			this.image = this.greenFlash;
+		}
+	},
+	flashRed: function() {
+		if (this.redFlash !== null) {
+			this.timer = 60;
+			this.good = false;
+			this.image = this.redFlash;
+		}
 	}
 });
 
@@ -649,15 +691,16 @@ var PlayerBullet = Class.create(Bullet, {
 });
 var MissileExplosion = Class.create(Sprite, {
 	initialize: function(x, y) {
-		Sprite.call(this, 68, 66);
+		Sprite.call(this, 68, 68);
 		this.x = x - 24;
 		this.y = y - 11;
 		this.opacity = 1;
 		this.damage = 20;
-		this.image = game.assets['images/explosion0.png'];
+		this.image = game.assets['images/explosion2.png'];
 	},
 	onenterframe: function() {
 		if (this.opacity === 1) {
+			game.assets['sounds/explosion0.mp3'].play();
 			for (var c = 0; c < enemies.length; c++) {
 				if (enemies[c].intersect(this)) {
 					enemies[c].health -= this.damage;
@@ -829,7 +872,9 @@ window.onload = function() {
 		'images/gui_buttonAH.png', 'images/gui_buttonBH.png', 'images/gui_buttonYH.png',
 		'images/gui_buttonLH.png', 'images/gui_barHealth.png', 'images/gui_buttonHit0.png',
 		'images/gui_buttonHit1.png', 'images/gui_barTick.png', 'images/gui_barTick1.png',
-		'images/gui_barTick2.png', 'images/explosion0.png', 'images/explosion1.png');
+		'images/gui_barTick2.png', 'images/explosion0.png', 'images/explosion1.png',
+		'images/explosion2.png', 'sounds/explosion0.mp3', 'images/gui_barFrame_Flash.png',
+		'images/gui_barFrame_FlashRed.png', 'images/gui_barFrame_FlashGreen.png');
 	
 	game.fps = 60;
 	game.scale = 1;
@@ -858,6 +903,9 @@ window.onload = function() {
 		barRed.button.activeImage = game.assets['images/gui_buttonBH.png'];
 		
 		barYellow = new Bar(245, gameHeight - 50);
+		barYellow.greenFlash = game.assets['images/gui_barFrame_FlashGreen.png'];
+		barYellow.redFlash = game.assets['images/gui_barFrame_FlashRed.png'];
+		barYellow.noFlash = game.assets['images/gui_barFrame_Flash.png'];
 		barYellow.filling = new Filling(barYellow.x, barYellow.y, "yellow");
 		barYellow.filling.image = game.assets['images/gui_barYellow0.png'];
 		barYellow.filling2 = new Filling(barYellow.x, barYellow.y, "gray2");
