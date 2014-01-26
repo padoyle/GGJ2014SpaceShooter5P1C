@@ -76,6 +76,60 @@ var BG = Class.create(Sprite, {
 		}
 	}
 });
+var Filling = Class.create(Sprite, {
+	initialize: function(x, y, isYellow) {
+		console.log(isYellow);
+		if (isYellow) {
+			Sprite.call(this, 15, 15);
+		}
+		else {
+			Sprite.call(this, 118, 15);
+		}
+		this.isYellow = isYellow;
+		this.x = x + 3;
+		this.y = y + 3;
+		this.power = 100;
+	},
+	onenterframe: function() {
+		if (this.isYellow) {
+			this.width = this.power / 100 * 15;
+		}
+		else {
+			this.width = this.power / 100 * 118;
+		}
+	}
+});
+var ButtonIcon = Class.create(Sprite, {
+	initialize: function(x, y, buttonNum) {
+		Sprite.call(this, 30, 30);
+		this.passiveImage;
+		this.activeImage;
+		this.x = x - 35;
+		this.y = y - 5;
+		this.buttonNum = buttonNum;
+	},
+	onenterframe: function() {
+		updateControllers();
+		if (controllers[0]) {
+			if (controllers[0].buttons[this.buttonNum] === 1) {
+				this.image = this.activeImage;
+			}
+			else {
+				this.image = this.passiveImage;
+			}
+		}
+	}
+});
+var Bar = Class.create(Sprite, {
+	initialize: function(x, y) {
+		Sprite.call(this, 131, 29);
+		this.x = x;
+		this.y = y;
+		this.image = game.assets['images/gui_barFrame.png'];
+		this.filling;
+		this.button;
+	}
+});
 
 var enemy_movesets = {
 	set1 : new MoveSet(new Array(
@@ -569,7 +623,13 @@ window.onload = function() {
 		'images/player_missile.png', 'images/playerShip1.png', 'images/player_shield.png',
 		'images/pulse.png', 'sounds/Inception.mp3', 'images/playerShip_base.png',
 		'images/playerShip_drive.png', 'images/playerShip_generator.png', 'images/playerShip_guns.png',
-		'images/playerShip_missile.png', 'images/playerShip_shields.png', 'images/enemy3.png');
+		'images/playerShip_missile.png', 'images/playerShip_shields.png', 'images/enemy3.png',
+		'images/gui_barFrame.png', 'images/gui_barRed.png', 'images/gui_barGreen.png',
+		'images/gui_barYellow0.png', 'images/gui_barBlue.png', 'images/gui_barGray.png',
+		'images/gui_buttonR.png', 'images/gui_buttonL.png', 'images/gui_buttonA.png',
+		'images/gui_buttonY.png', 'images/gui_buttonB.png', 'images/gui_buttonRH.png',
+		'images/gui_buttonAH.png', 'images/gui_buttonBH.png', 'images/gui_buttonYH.png',
+		'images/gui_buttonLH.png');
 	
 	game.fps = 60;
 	game.scale = 1;
@@ -579,15 +639,65 @@ window.onload = function() {
 	};
 
 	game.onload = function() {
-		var label, bg;
+		var label, bg, bar;
 		label = new Label("TWENTY Players.  FOUR Controllers.");
 		label.color = 'white';
 		
 		bg = new BG();
 		bg.image = game.assets['images/bg1.png'];
+		
+		barRed = new Bar(80, gameHeight - 50);
+		barRed.filling = new Filling(barRed.x, barRed.y, false);
+		barRed.filling.image = game.assets['images/gui_barRed.png'];
+		barRed.button = new ButtonIcon(barRed.x, barRed.y, CONT_INPUT.b);
+		barRed.button.passiveImage = game.assets['images/gui_buttonB.png'];
+		barRed.button.activeImage = game.assets['images/gui_buttonBH.png'];
+		
+		barYellow = new Bar(245, gameHeight - 50);
+		barYellow.filling = new Filling(barYellow.x, barYellow.y, true);
+		barYellow.filling.image = game.assets['images/gui_barYellow0.png'];
+		barYellow.button = new ButtonIcon(barYellow.x, barYellow.y, CONT_INPUT.y);
+		barYellow.button.passiveImage = game.assets['images/gui_buttonY.png'];
+		barYellow.button.activeImage = game.assets['images/gui_buttonYH.png'];
+		
+		barGreen = new Bar(410, gameHeight - 50);
+		barGreen.filling = new Filling(barGreen.x, barGreen.y, false);
+		barGreen.filling.image = game.assets['images/gui_barGreen.png'];
+		barGreen.button = new ButtonIcon(barGreen.x, barGreen.y, CONT_INPUT.a);
+		barGreen.button.passiveImage = game.assets['images/gui_buttonA.png'];
+		barGreen.button.activeImage = game.assets['images/gui_buttonAH.png'];
+		
+		barBlue = new Bar(170, gameHeight - 100);
+		barBlue.filling = new Filling(barBlue.x, barBlue.y, false);
+		barBlue.filling.image = game.assets['images/gui_barBlue.png'];
+		barBlue.button = new ButtonIcon(barBlue.x, barBlue.y, CONT_INPUT.lstick);
+		barBlue.button.passiveImage = game.assets['images/gui_buttonL.png'];
+		barBlue.button.activeImage = game.assets['images/gui_buttonLH.png'];
+		
+		barGray = new Bar(335, gameHeight - 100);
+		barGray.filling = new Filling(barGray.x, barGray.y, false);
+		barGray.filling.image = game.assets['images/gui_barGray.png'];
+		barGray.button = new ButtonIcon(barGray.x, barGray.y, CONT_INPUT.rstick);
+		barGray.button.passiveImage = game.assets['images/gui_buttonR.png'];
+		barGray.button.activeImage = game.assets['images/gui_buttonRH.png'];
 
 		game.rootScene.addChild(bg);
 		game.rootScene.addChild(label);
+		game.rootScene.addChild(barRed);
+		game.rootScene.addChild(barRed.filling);
+		game.rootScene.addChild(barRed.button);
+		game.rootScene.addChild(barYellow);
+		game.rootScene.addChild(barYellow.filling);
+		game.rootScene.addChild(barYellow.button);
+		game.rootScene.addChild(barGreen);
+		game.rootScene.addChild(barGreen.filling);
+		game.rootScene.addChild(barGreen.button);
+		game.rootScene.addChild(barBlue);
+		game.rootScene.addChild(barBlue.filling);
+		game.rootScene.addChild(barBlue.button);
+		game.rootScene.addChild(barGray);
+		game.rootScene.addChild(barGray.filling);
+		game.rootScene.addChild(barGray.button);
 		
 		updateControllers();
 		
