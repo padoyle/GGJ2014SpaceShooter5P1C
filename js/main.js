@@ -76,6 +76,22 @@ var BG = Class.create(Sprite, {
 	}
 });
 
+var enemy_movesets = {
+	set1 : new MoveSet(new Array(
+				new Move(0, 2, 60, 3, 0),
+				new Move((11.0 / 4.0) * Math.PI, 1.5, 30, 0, 0),
+				new Move((13.0 / 4.0) * Math.PI, 4, 30, 0, 0),
+				new Move((1.0 / 2.0) * Math.PI, 2, 60, 0, 0))),
+	set2 : new MoveSet(new Array(
+				new Move(0, 3, 40, 4, 0),
+				new Move((15.0 / 4.0) * Math.PI, 0.5, 60, 0, 0),
+				new Move(0.5 * Math.PI, 2, 40, 0, 0),
+				new Move(Math.PI, 3, 40, 4, 0),
+				new Move((13.0 / 4.0) * Math.PI, 0.5, 60, 0, 0),
+				new Move(0.5 * Math.PI, 2, 40, 0, 0)))
+}
+
+
 Ship = Class.create(Sprite, {
 	initialize: function(x, shipNum) {
 		Sprite.call(this, 30, 30);
@@ -111,44 +127,9 @@ Ship = Class.create(Sprite, {
 });
 
 var Enemy = Class.create(Sprite, {
-	initialize: function(width, height) {
-		Sprite.call(this, width, height);
-		this.frame = 0;
-		this.health = 10;
-		this.velY = 0;
-		this.velX = 0;
-	},
-	onenterframe: function() {
-		if (this.health <= 0) {
-			var i = enemies.indexOf(this);
-			enemies.splice(i, 1);
-			game.rootScene.removeChild(this);
-		}
-		if (this.y > gameHeight - this.height) {
-			this.y = gameHeight - this.height;
-			this.velY *= -1;
-		}
-		if (this.y < 0) {
-			this.y = 0;
-			this.velY *= -1;
-		}
-		if (this.x < 0) {
-			this.x = 0;
-			this.velX *= -1;
-		}
-		if (this.x > gameWidth - this.width) {
-			this.x = gameWidth - this.width;
-			this.velX *= -1;
-		}
-		this.x += this.velX;
-		this.y += this.velY;
-	}
-});
-
-var EnemyWithMoves = Class.create(Enemy, {
 	initialize: function(_moveset, _x) {
-		Enemy.call(this, 30, 30);
-		this.image = getAssets()['images/Square.png'];
+		Sprite.call(this, 50, 50);
+		this.frame = 0;
 		this.moveset = _moveset;
 		this.move = this.moveset.nextMove();
 		this.move_progress = 0;
@@ -172,7 +153,7 @@ var EnemyWithMoves = Class.create(Enemy, {
 		}
 
 		if (this.move_progress % (this.move.duration / this.move.bullets) === 0) {
-			var bullet = new EnemyBullet(this.x, this.y, 2);
+			var bullet = new EnemyBullet(this.x + this.width/2, this.y + this.height/2, 2);
 			game.rootScene.addChild(bullet);
 		}
 
@@ -192,6 +173,20 @@ var EnemyWithMoves = Class.create(Enemy, {
 		this.y += this.velY;
 
 		this.move_progress++;
+	}
+});
+
+var Enemy1 = Class.create(Enemy, {
+	initialize: function(_x) {
+		Enemy.call(this, enemy_movesets.set1.clone(), _x);
+		this.image = getAssets()['images/enemy1.png'];
+	}
+});
+
+var Enemy2 = Class.create(Enemy, {
+	initialize: function(_x) {
+		Enemy.call(this, enemy_movesets.set2.clone(), _x);
+		this.image = getAssets()['images/enemy2.png'];
 	}
 });
 
@@ -231,8 +226,8 @@ var EnemyBullet = Class.create(Sprite, {
 		Sprite.call(this, 8, 15);
 		this.image = getAssets()['images/bullet2.png'];
 		this.damage = _damage;
-		this.x = _x;
-		this.y = _y;
+		this.x = _x - this.width/2;
+		this.y = _y - this.height/2;
 		this.velX = 0;
 		this.velY = 5;
 	},
@@ -320,21 +315,6 @@ var PlayerMissile = Class.create(Bullet, {
 	}
 });
 
-var enemy_movesets = {
-	set1 : new MoveSet(new Array(
-				new Move(0, 2, 60, 3, 0),
-				new Move((11.0 / 4.0) * Math.PI, 1.5, 30, 0, 0),
-				new Move((13.0 / 4.0) * Math.PI, 4, 30, 0, 0),
-				new Move((1.0 / 2.0) * Math.PI, 2, 60, 0, 0))),
-	set2 : new MoveSet(new Array(
-				new Move(0, 3, 40, 4, 0),
-				new Move((15.0 / 4.0) * Math.PI, 0.5, 60, 0, 0),
-				new Move(0.5 * Math.PI, 2, 40, 0, 0),
-				new Move(Math.PI, 3, 40, 4, 0),
-				new Move((13.0 / 4.0) * Math.PI, 0.5, 60, 0, 0),
-				new Move(0.5 * Math.PI, 2, 40, 0, 0)))
-}
-
 var gameWidth = 600;
 var gameHeight = 720;
 
@@ -369,7 +349,7 @@ window.onload = function() {
 	game = new Game(gameWidth, gameHeight);
 	game.preload(
 		'images/bg1.png', 'images/Square.png', 'images/bullet.png',
-		'images/bullet2.png');
+		'images/bullet2.png', 'images/enemy1.png', 'images/enemy2.png');
 	
 	game.fps = 60;
 	game.scale = 1;
@@ -405,11 +385,11 @@ window.onload = function() {
 		healthDisplay.color = 'white';
 		healthDisplay.x = gameWidth - 60;
 
-		addEnemy(new EnemyWithMoves(enemy_movesets.set2.clone(), 75));
-		addEnemy(new EnemyWithMoves(enemy_movesets.set1.clone(), 150));
-		addEnemy(new EnemyWithMoves(enemy_movesets.set2.clone(), 225));
-		addEnemy(new EnemyWithMoves(enemy_movesets.set1.clone(), 300));
-		addEnemy(new EnemyWithMoves(enemy_movesets.set2.clone(), 375));
+		addEnemy(new Enemy1(75));
+		addEnemy(new Enemy1(225));
+		addEnemy(new Enemy1(375));
+		addEnemy(new Enemy2(150));
+		addEnemy(new Enemy2(300));
 				
 		game.rootScene.addEventListener('enterframe', function(e) {
 			var gameOver = true;
