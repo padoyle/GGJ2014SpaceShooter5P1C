@@ -930,6 +930,12 @@ window.onload = function() {
 							}
 						}
 					}
+					if (ships[k].missileExists) {
+						barGray.filling.addValue(-100/120);
+					}
+					else {
+						barGray.filling.addValue(100/90);
+					}
 					if (controllers[k].buttons[CONT_INPUT.y] === 1) {
 						if (ships[k].checkComponent(GeneratorImage)) {
 							barYellow.filling.checkticker();
