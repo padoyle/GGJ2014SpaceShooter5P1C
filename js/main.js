@@ -377,7 +377,7 @@ var PlayerBullet = Class.create(Bullet, {
 		this.x = _x - this.width/2;
 		this.y = _y - this.height;
 		this.velX = 0;
-		this.velY = -12;
+		this.velY = -10;
 	}
 });
 
