@@ -30,6 +30,7 @@ var bgm = null;
 var enemies = []; // all enemies
 var scalingDifficultyNumber = 1;
 var functions = [];
+var chooseComponent = false;
 
 var barRed;
 var barBlue;
@@ -249,21 +250,35 @@ var Bar = Class.create(Sprite, {
 		this.x = x;
 		this.y = y;
 		this.filling;
-		this.filling2;
+		this.filling2 = null;
 		this.greenFlash = null;
 		this.redFlash = null;
-		this.noFlash = null;
+		this.noFlash = game.assets['images/gui_barFrame_Flash.png'];
 		this.neutral = game.assets['images/gui_barFrame.png'];
 		this.image = this.neutral;
 		this.good = true;
 		this.button;
 		this.timer = 0;
+		this.flashTimer = 40;
 	},
 	onenterframe: function() {
-		if (this.timer === 0) {
-			this.image = this.neutral;
+		if (chooseComponent && ((this.filling.power === 0) || (this.filling.ticker !== undefined && !this.filling.ticker.visible))) {
+			if (this.flashTimer === 0) {
+				this.flashTimer = 40;
+			}
+			if (this.flashTimer === 40) {
+				this.image = this.noFlash;
+			}
+			else if (this.flashTimer === 20) {
+				this.image = this.neutral;
+			}
+			this.flashTimer--;
 		}
 		else {
+			this.image = this.neutral;
+			this.flashTimer = 40;
+		}
+		if (this.timer > 0 && this.ticker !== undefined && this.ticker.visible) {
 			this.timer--;
 			if (this.timer % 10 === 0) {
 				if (this.good) {
@@ -438,12 +453,15 @@ var Ship = Class.create(Sprite, {
 		}
 		return false;
 	},
-	addComponent: function(clazzz) {
-		if (!checkComponent(clazzz)) {
-			soundsList.push(new clazzz(0, 0).sound);
+	addComponent: function(clazz) {
+		if (!this.checkComponent(clazz)) {
+			soundsList.push(new clazz(0, 0, 0).sound);
 			soundTimer += 45;
 			online = true;
-			this.components.push(new clazz(this.x, this.y, this.number));
+			var newComp = new clazz(this.x, this.y, this.number);
+			this.components.push(newComp);
+			game.rootScene.addChild(newComp);
+			this.updateComponents();
 		}
 	},
 	drawComponents: function() {
@@ -952,7 +970,6 @@ window.onload = function() {
 		barYellow = new Bar(245, gameHeight - 50);
 		barYellow.greenFlash = game.assets['images/gui_barFrame_FlashGreen.png'];
 		barYellow.redFlash = game.assets['images/gui_barFrame_FlashRed.png'];
-		barYellow.noFlash = game.assets['images/gui_barFrame_Flash.png'];
 		barYellow.filling = new Filling(barYellow.x, barYellow.y, "yellow");
 		barYellow.filling.image = game.assets['images/gui_barYellow0.png'];
 		barYellow.filling2 = new Filling(barYellow.x, barYellow.y, "gray2");
@@ -1043,7 +1060,6 @@ window.onload = function() {
 					soundsList[0].play();
 					soundsList.splice(soundsList[0], 1);
 				}
-				console.log(soundTimer);
 				soundTimer--;
 			}
 			
@@ -1162,10 +1178,31 @@ window.onload = function() {
 						barYellow.filling.releaseticker();
 					}
 				}
-				else if (controller.buttons[CONT_INPUT.lt] === 1 && game.currentScene == game.rootScene) {
+				if (controller.buttons[CONT_INPUT.lt] === 1 && game.currentScene == game.rootScene) {
 					game.assets['sounds/Inception.mp3'].play();
 					bgm.pause();
 					game.pushScene(new PulseScene());
+				}
+				if (controller.buttons[CONT_INPUT.rt] === 1 && !chooseComponent) {
+					chooseComponent = true;
+				}
+				if (chooseComponent) {
+					if (!ship.checkComponent(GeneratorImage) && controller.buttons[CONT_INPUT.y] === 1) {
+						chooseComponent = false;
+						ship.addComponent(GeneratorImage);
+					}
+					else if (!ship.checkComponent(ShieldImage) && controller.buttons[CONT_INPUT.a] === 1) {
+						chooseComponent = false;
+						ship.addComponent(ShieldImage);
+					}
+					else if (!ship.checkComponent(GunImage) && controller.buttons[CONT_INPUT.b] === 1) {
+						chooseComponent = false;
+						ship.addComponent(GunImage);
+					}
+					else if (!ship.checkComponent(MissileImage) && controller.buttons[CONT_INPUT.rstick] === 1) {
+						chooseComponent = false;
+						ship.addComponent(MissileImage);
+					} 
 				}
 			}
 		});
