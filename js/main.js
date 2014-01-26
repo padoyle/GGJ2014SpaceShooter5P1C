@@ -358,6 +358,30 @@ var PlayerMissile = Class.create(Bullet, {
 	}
 });
 
+var Pulse = Class.create(Sprite, {
+	initialize: function() {
+		Sprite.call(this, gameWidth, 30);
+		this.image = game.assets['images/pulse.png'];
+	},
+	onenterframe: function() {
+		this.y += 4;
+	}
+});
+
+var PulseScene = Class.create(Scene, {
+	initialize: function() {
+		Scene.apply(this);
+		this.pulse = new Pulse();
+		this.addChild(this.pulse);
+	},
+	onenterframe: function() {
+		if (this.pulse.y > gameHeight) {
+			aud.resumepause();
+			game.popScene();
+		}
+	}
+});
+
 var gameWidth = 600;
 var gameHeight = 720;
 
@@ -395,7 +419,8 @@ window.onload = function() {
 	game.preload(
 		'images/bg1.png', 'images/Square.png', 'images/player_bullet.png',
 		'images/bullet2.png', 'images/enemy1.png', 'images/enemy2.png',
-		'images/player_missile.png', 'images/playerShip1.png', 'images/player_shield.png');
+		'images/player_missile.png', 'images/playerShip1.png', 'images/player_shield.png',
+		'images/pulse.png', 'sounds/Inception.mp3');
 	
 	game.fps = 60;
 	game.scale = 1;
@@ -457,6 +482,11 @@ window.onload = function() {
 				stress = 1 - ships[0].health / ships[0].maxHealth;
 				energy = (enemies.length > 20 ? 20 : enemies.length) / 20;
 				aud.adaptpattern(stress, energy);
+			}
+			if (game.rootScene.age % 600 === 0 && game.rootScene.age > 1) {
+				game.assets['sounds/Inception.mp3'].play();
+				aud.resumepause();
+				game.pushScene(new PulseScene());
 			}
 			
 			updateControllers();
