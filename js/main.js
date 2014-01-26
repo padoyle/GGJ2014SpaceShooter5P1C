@@ -28,40 +28,9 @@ var CONT_INPUT = {
 var game = null;
 var enemies = []; // all enemies
 var ships = []; // all ships
-var healthDisplays = [];
 var scalingDifficultyNumber = 1;
 var energy = 0;
 var stress = 0;
-
-var Move = Class.create({
-	initialize: function(_direction, _speed, _duration, _bullets, _angle) {
-		this.direction = _direction;
-		this.speed = _speed;
-		this.duration = _duration;
-		this.bullets = _bullets;
-		this.angle = _angle;
-	}
-});
-
-var MoveSet = Class.create({
-	initialize: function(_moves, _repeat) {
-		this.moves = _moves;
-		this.repeat = _repeat;
-		this.current = -1;
-		this.total = _moves.length;
-	},
-
-	nextMove: function() {
-		this.current++;
-		if (this.current >= this.total)
-			this.current = 0;
-		return this.moves[this.current];
-	},
-
-	clone: function() {
-		return new MoveSet(this.moves);
-	}
-});
 
 var BG = Class.create(Sprite, {
 	initialize: function() {
@@ -76,9 +45,14 @@ var BG = Class.create(Sprite, {
 		}
 	}
 });
+var HealthBar = Class.create(Sprite, {
+	initialize: function() {
+		Sprite.call(this, 49, 10);
+		this.opacity = .8;
+	}
+});
 var Filling = Class.create(Sprite, {
 	initialize: function(x, y, isYellow) {
-		console.log(isYellow);
 		if (isYellow) {
 			Sprite.call(this, 15, 15);
 		}
@@ -99,6 +73,20 @@ var Filling = Class.create(Sprite, {
 		}
 	}
 });
+var HitImage = Class.create(Sprite, {
+	initialize: function(x, y, big) {
+		if (big) {
+			Sprite.call(this, 41, 39);
+			this.x = x - 3;
+			this.y = y - 4;
+		}
+		else {
+			Sprite.call(this, 35, 35);
+			this.x = x;
+			this.y = y - 2.5;
+		}
+	}
+});
 var ButtonIcon = Class.create(Sprite, {
 	initialize: function(x, y, buttonNum) {
 		Sprite.call(this, 30, 30);
@@ -107,15 +95,25 @@ var ButtonIcon = Class.create(Sprite, {
 		this.x = x - 35;
 		this.y = y - 5;
 		this.buttonNum = buttonNum;
+		if (buttonNum > CONT_INPUT.lb) {
+			this.hitImage = new HitImage(this.x, this.y, true);
+			this.hitImage.image = game.assets['images/gui_buttonHit1.png'];
+		}
+		else {
+			this.hitImage = new HitImage(this.x, this.y, false);
+			this.hitImage.image = game.assets['images/gui_buttonHit0.png'];
+		}
 	},
 	onenterframe: function() {
 		updateControllers();
 		if (controllers[0]) {
 			if (controllers[0].buttons[this.buttonNum] === 1) {
 				this.image = this.activeImage;
+				game.rootScene.addChild(this.hitImage);
 			}
 			else {
 				this.image = this.passiveImage;
+				game.rootScene.removeChild(this.hitImage);
 			}
 		}
 	}
@@ -130,28 +128,6 @@ var Bar = Class.create(Sprite, {
 		this.button;
 	}
 });
-
-var enemy_movesets = {
-	set1 : new MoveSet(new Array(
-				new Move(0, 2, 60, 3, 90),
-				new Move((11.0 / 4.0) * Math.PI, 1.5, 30, 0, 0),
-				new Move((13.0 / 4.0) * Math.PI, 4, 30, 0, 0),
-				new Move((1.0 / 2.0) * Math.PI, 2, 60, 0, 0))),
-	set2 : new MoveSet(new Array(
-				new Move(0, 3, 40, 4, 90),
-				new Move((15.0 / 4.0) * Math.PI, 0.5, 60, 0, 0),
-				new Move(0.5 * Math.PI, 2, 40, 0, 0),
-				new Move(Math.PI, 3, 40, 4, 90),
-				new Move((13.0 / 4.0) * Math.PI, 0.5, 60, 0, 0),
-				new Move(0.5 * Math.PI, 2, 40, 0, 0))),
-	set3 : new MoveSet(new Array(
-				new Move(0.25 * Math.PI, 2, 60, 0, 0),
-				new Move(0, 0, 0, 5, 90),
-				new Move(0, 0, 60, 0, 0),
-				new Move(0.75 * Math.PI, 2, 60, 0, 0),
-				new Move(0, 0, 0, 5, 120),
-				new Move(0, 0, 60, 0, 0)))
-};
 
 var Component = Class.create(Sprite, {
 	initialize: function(x, y, shipNum) {
@@ -203,6 +179,10 @@ Ship = Class.create(Sprite, {
 		this.speed = 3;
 		this.x = x;
 		this.y = 360;
+		this.healthBar = new HealthBar();
+		this.healthBar.x = this.x;
+		this.healthBar.y = this.y + this.height + 5;
+		this.healthBar.image = game.assets['images/gui_barHealth.png'];
 		this.bulletTimer = 30;
 		this.shield = null;
 		this.missileExists = false;
@@ -219,8 +199,9 @@ Ship = Class.create(Sprite, {
 		var generatorImage = new GeneratorImage(this.x, this.y, this.number);
 		this.components.push(generatorImage);
 		
+		this.updateComponents();
+		
 		this.addEventListener('enterframe', function() {
-			healthDisplays[this.number].text = "Health" + this.number + ": " + this.health;
 			if (this.health <= 0) {
 				ships[this.number] = null;
 				this.removeComponents();
@@ -245,12 +226,17 @@ Ship = Class.create(Sprite, {
 		for (var f = 0; f < this.components.length; f++) {
 			this.components[f].update();
 		}
+		this.healthBar.x = this.x;
+		this.healthBar.y = this.y + 5 + this.height;
+		this.healthBar.width = (this.health / this.maxHealth) * 49;
+		console.log(this.healthBar.x  + " " + this.healthBar.y);
 	},
 	removeComponents: function() {
 		for (var g = 0; g < this.components.length; g++) {
 			game.rootScene.removeChild(this.components[g]);
 		}
 		this.components = [];
+		game.rootScene.removeChild(this.healthBar);
 	},
 	removeComponent: function(clazz) {
 		for (var r = 0; r < this.components.length; r++) {
@@ -270,12 +256,20 @@ Ship = Class.create(Sprite, {
 		}
 		return false;
 	},
+	// drainComponent: function(clazz, _amount) {
+	// 	for (var t = 0; t < this.component.length; t++) {
+	// 		if (this.components[t] instanceof clazz) {
+	// 			this.components[t].drainEnergy(_amount);
+	// 		}
+	// 	}
+	// },
 	drawComponents: function() {
 		for (var w = 0; w < this.components.length; w++) {
 			if (this.components[w]) {
 				game.rootScene.addChild(this.components[w]);
 			}
 		}
+		game.rootScene.addChild(this.healthBar);
 	}
 });
 
@@ -303,6 +297,7 @@ var Enemy = Class.create(Sprite, {
         this.move_progress = 0;
         this.x = _x;
         this.y = _y;
+        this.heatlh = 10;
         this.velX = Math.cos(this.move.direction) * this.move.speed;
         this.velY = Math.sin(this.move.direction) * this.move.speed;
         this.onScreen = false;
@@ -370,6 +365,7 @@ var Enemy1 = Class.create(Enemy, {
 	initialize: function(_x, _y) {
 		Enemy.call(this, enemy_movesets.set1.clone(), _x, _y);
 		this.image = getAssets()['images/enemy1.png'];
+		this.health = 10;
 	}
 });
 
@@ -377,13 +373,23 @@ var Enemy2 = Class.create(Enemy, {
 	initialize: function(_x, _y) {
 		Enemy.call(this, enemy_movesets.set2.clone(), _x, _y);
 		this.image = getAssets()['images/enemy2.png'];
+		this.health = 10;
 	}
 });
 
 var Enemy3 = Class.create(Enemy, {
 	initialize: function(_x, _y) {
 		Enemy.call(this, enemy_movesets.set3.clone(), _x, _y);
-		this.image = getAssets()['images/enemy3.png'];
+		this.image = getAssets()['images/enemy3_2.png'];
+		this.health = 8;
+	}
+});
+
+var Enemy4 = Class.create(Enemy, {
+	initialize: function(_x, _y) {
+		Enemy.call(this, enemy_movesets.set4.clone(), _x, _y);
+		this.image = getAssets()['images/enemy1.png'];
+		this.health = 6;
 	}
 });
 
@@ -401,6 +407,7 @@ var Bullet = Class.create(Sprite, {
 			if (ships[k] !== null && ships[k].intersect(this)) {
 				if (ships[k].shield === null) {
 					ships[k].health -= this.damage;
+					ships[k].updateComponents();
 				}
 				game.rootScene.removeChild(this);
 			}
@@ -441,6 +448,7 @@ var EnemyBullet = Class.create(Bullet, {
 			}
 			else if (ships[k] !== null && ships[k].intersect(this)) {
 				ships[k].health -= this.damage;
+				ships[k].updateComponents();
 				game.rootScene.removeChild(this);
 			}
 		}
@@ -491,6 +499,7 @@ var PlayerMissile = Class.create(Bullet, {
 			else if (ships[k] !== null && ships[k].intersect(this) && this.timer > 45) {
 				ships[this.controller].missileExists = false;
 				ships[k].health -= this.damage;
+				ships[k].updateComponents();
 				game.rootScene.removeChild(this);
 			}
 		}
@@ -551,6 +560,7 @@ var PulseScene = Class.create(Scene, {
 			for (var v = 0; v < this.somethingDied.length; v++) {
 				if (!this.somethingDied[v] && getShips()[v]) {
 					getShips()[v].health = 0;
+					getShips()[v].updateComponents();
 				}
 			}
 			if (!this.somethingDied) {
@@ -624,13 +634,14 @@ window.onload = function() {
 		'images/player_missile.png', 'images/playerShip1.png', 'images/player_shield.png',
 		'images/pulse.png', 'sounds/Inception.mp3', 'images/playerShip_base.png',
 		'images/playerShip_drive.png', 'images/playerShip_generator.png', 'images/playerShip_guns.png',
-		'images/playerShip_missile.png', 'images/playerShip_shields.png', 'images/enemy3.png',
+		'images/playerShip_missile.png', 'images/playerShip_shields.png', 'images/enemy3_2.png',
 		'images/gui_barFrame.png', 'images/gui_barRed.png', 'images/gui_barGreen.png',
 		'images/gui_barYellow0.png', 'images/gui_barBlue.png', 'images/gui_barGray.png',
 		'images/gui_buttonR.png', 'images/gui_buttonL.png', 'images/gui_buttonA.png',
 		'images/gui_buttonY.png', 'images/gui_buttonB.png', 'images/gui_buttonRH.png',
 		'images/gui_buttonAH.png', 'images/gui_buttonBH.png', 'images/gui_buttonYH.png',
-		'images/gui_buttonLH.png');
+		'images/gui_buttonLH.png', 'images/gui_barHealth.png', 'images/gui_buttonHit0.png',
+		'images/gui_buttonHit1.png');
 	
 	game.fps = 60;
 	game.scale = 1;
@@ -657,6 +668,7 @@ window.onload = function() {
 		barYellow = new Bar(245, gameHeight - 50);
 		barYellow.filling = new Filling(barYellow.x, barYellow.y, true);
 		barYellow.filling.image = game.assets['images/gui_barYellow0.png'];
+		
 		barYellow.button = new ButtonIcon(barYellow.x, barYellow.y, CONT_INPUT.y);
 		barYellow.button.passiveImage = game.assets['images/gui_buttonY.png'];
 		barYellow.button.activeImage = game.assets['images/gui_buttonYH.png'];
@@ -710,23 +722,12 @@ window.onload = function() {
 		for (var k = 0; controllers[k] !== undefined; k++) {
 			ships[k] = new Ship(k * 100, k);
 			game.rootScene.addChild(ships[k]);
-			healthDisplays[k] = new Label("Health " + k + ": " + ships[k].health);
-			healthDisplays[k].color = 'white';
-			healthDisplays[k].x = gameWidth - 65;
-			healthDisplays[k].y = k * 30;
-			game.rootScene.addChild(healthDisplays[k]);
 			ships[k].drawComponents();
 		}
 		healthDisplay = new Label("Health: ");
 		healthDisplay.color = 'white';
 		healthDisplay.x = gameWidth - 60;
 
-		// addEnemy(new Enemy1(75, 30));
-		// addEnemy(new Enemy1(225, 30));
-		// addEnemy(new Enemy1(375, 30));
-		// addEnemy(new Enemy2(150, 30));
-		// addEnemy(new Enemy2(300, 30));
-				
 		game.rootScene.addEventListener('enterframe', function(e) {
 			var gameOver = true;
 			for (var q = 0; q < ships.length; q++) {
@@ -779,7 +780,7 @@ window.onload = function() {
 						ships[k].x += controllers[k].axes[CONT_INPUT.lstick_x] * ships[k].speed;
 						ships[k].updateComponents();
 					}
-					else if (controllers[k].axes[CONT_INPUT.lstick_y] > 0.5 || controllers[k].axes[CONT_INPUT.lstick_y] < -0.5) {
+					if (controllers[k].axes[CONT_INPUT.lstick_y] > 0.5 || controllers[k].axes[CONT_INPUT.lstick_y] < -0.5) {
 						ships[k].y += controllers[k].axes[CONT_INPUT.lstick_y] * ships[k].speed;
 						ships[k].updateComponents();
 					}
