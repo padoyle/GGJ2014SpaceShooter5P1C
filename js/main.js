@@ -93,11 +93,49 @@ var enemy_movesets = {
 				new Move(0.5 * Math.PI, 2, 40, 0, 0)))
 };
 
+var Component = Class.create(Sprite, {
+	initialize: function(x, y, shipNum) {
+		Sprite.call(this, 50, 51);
+		this.shipNum = shipNum;
+		this.x = x;
+		this.y = y;
+	},
+	update: function() {
+		if (getShips()[this.shipNum] !== undefined && getShips()[this.shipNum].health > 0) {
+			this.x = getShips()[this.shipNum].x;
+			this.y = getShips()[this.shipNum].y;
+		}
+	}
+});
+var ShieldImage = Class.create(Component, {
+	initialize: function(x, y, shipNum) {
+		Component.call(this, x, y, shipNum);
+		this.image = getAssets()['images/playerShip_shields.png'];
+	}
+});
+var MissileImage = Class.create(Component, {
+	initialize: function(x, y, shipNum) {
+		Component.call(this, x, y, shipNum);
+		this.image = getAssets()['images/playerShip_missile.png'];
+	}
+});
+var GunImage = Class.create(Component, {
+	initialize: function(x, y, shipNum) {
+		Component.call(this, x, y, shipNum);
+		this.image = getAssets()['images/playerShip_guns.png'];
+	}
+});
+var GeneratorImage = Class.create(Component, {
+	initialize: function(x, y, shipNum) {
+		Component.call(this, x, y, shipNum);
+		this.image = getAssets()['images/playerShip_generator.png'];
+	}
+});
 
 Ship = Class.create(Sprite, {
 	initialize: function(x, shipNum) {
-		Sprite.call(this, 49, 41);
-		this.image = getAssets()['images/playerShip1.png'];
+		Sprite.call(this, 50, 51);
+		this.image = getAssets()['images/playerShip_base.png'];
 		this.number = shipNum;
 		this.frame = 0; 
 		this.health = 10;
@@ -108,10 +146,28 @@ Ship = Class.create(Sprite, {
 		this.bulletTimer = 30;
 		this.shield = null;
 		this.missileExists = false;
+		this.components = [];
+		var shieldImage = new ShieldImage(this.x, this.y, this.number);
+		this.components.push(shieldImage);
+		game.rootScene.addChild(shieldImage);
+		
+		var missileImage = new MissileImage(this.x, this.y, this.number);
+		this.components.push(missileImage);
+		game.rootScene.addChild(missileImage);
+		
+		var gunImage = new GunImage(this.x, this.y, this.number);
+		this.components.push(gunImage);
+		game.rootScene.addChild(gunImage);
+		
+		var generatorImage = new GeneratorImage(this.x, this.y, this.number);
+		this.components.push(generatorImage);
+		game.rootScene.addChild(generatorImage);
+		
 		this.addEventListener('enterframe', function() {
 			healthDisplays[this.number].text = "Health" + this.number + ": " + this.health;
 			if (this.health <= 0) {
 				ships[this.number] = null;
+				this.removeComponents();
 				game.rootScene.removeChild(this);
 			}
 			this.bulletTimer++;
@@ -128,6 +184,16 @@ Ship = Class.create(Sprite, {
 				this.x = gameWidth - this.width;
 			}
 		});
+	},
+	updateComponents: function() {
+		for (var f = 0; f < this.components.length; f++) {
+			this.components[f].update();
+		}
+	},
+	removeComponents: function() {
+		for (var g = 0; g < this.components.length; g++) {
+			game.rootScene.removeChild(this.components[g]);
+		}
 	}
 });
 
@@ -420,7 +486,9 @@ window.onload = function() {
 		'images/bg1.png', 'images/Square.png', 'images/player_bullet.png',
 		'images/bullet2.png', 'images/enemy1.png', 'images/enemy2.png',
 		'images/player_missile.png', 'images/playerShip1.png', 'images/player_shield.png',
-		'images/pulse.png', 'sounds/Inception.mp3');
+		'images/pulse.png', 'sounds/Inception.mp3', 'images/playerShip_base.png',
+		'images/playerShip_drive.png', 'images/playerShip_generator.png', 'images/playerShip_guns.png',
+		'images/playerShip_missile.png', 'images/playerShip_shields.png');
 	
 	game.fps = 60;
 	game.scale = 1;
@@ -515,9 +583,11 @@ window.onload = function() {
 					}
 					if (controllers[k].axes[CONT_INPUT.lstick_x] > 0.5 || controllers[k].axes[CONT_INPUT.lstick_x] < -0.5) {
 						ships[k].x += controllers[k].axes[CONT_INPUT.lstick_x] * ships[k].speed;
+						ships[k].updateComponents();
 					}
 					if (controllers[k].axes[CONT_INPUT.lstick_y] > 0.5 || controllers[k].axes[CONT_INPUT.lstick_y] < -0.5) {
 						ships[k].y += controllers[k].axes[CONT_INPUT.lstick_y] * ships[k].speed;
+						ships[k].updateComponents();
 					}
 					if (controllers[k].buttons[CONT_INPUT.b] === 1 && ships[k].bulletTimer >= 30) {
 						game.rootScene.addChild(new PlayerBullet(ships[k].x + ships[k].width/2, ships[k].y, k));
