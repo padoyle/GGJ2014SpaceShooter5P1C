@@ -511,7 +511,6 @@ var Enemy = Class.create(Sprite, {
         this.move_progress = 0;
         this.x = _x;
         this.y = _y;
-        this.heatlh = 10;
         this.velX = Math.cos(this.move.direction) * this.move.speed;
         this.velY = Math.sin(this.move.direction) * this.move.speed;
         this.onScreen = false;
@@ -1024,7 +1023,10 @@ window.onload = function() {
 		
 		bgm = game.assets['sounds/HELLISTHEBULLET.wav'];
 		bgm.play();
-		
+		var disableAllComponents = false;
+		var disableTimer = 0;
+		var disableTimeMax = 120;
+
 		ship = new Ship(100);
 		game.rootScene.addChild(ship);
 		ship.drawComponents();
@@ -1077,22 +1079,138 @@ window.onload = function() {
 			}
 
 			if (controller !== undefined) {
-				if (controller.buttons[CONT_INPUT.lstick] === 1) {
-					brakesPressed = true;
+				// If nothing's disabled, but bars are empty				
+				if (!disableAllComponents && disableTimer <= 0 && (barRed.filling.power + barGray.filling.power
+																+ barGreen.filling.power + barBlue.filling.power) == 0) {
+					disableTimer = disableTimeMax;
+					disableAllComponents = true;
+					console.log("disable");
 				}
-				else {
-					if (brakesPressed) {
-						brakesToggle = !brakesToggle;
+				console.log(disableTimer, disableTimeMax, barRed.filling.power, barGray.filling.power, barGreen.filling.power, barBlue.filling.power)
+
+				// While components are disabled
+				if (disableAllComponents === true) {
+					if (disableTimer <= 0) {
+						disableTimer = 0;
+						disableAllComponents = false;
+						console.log("COMING BACK ONLINE");
+						barRed.filling.addValue(50);
+						barBlue.filling.addValue(50);
+						barGreen.filling.addValue(50);
+						barGray.filling.addValue(50);
+					}
+					if (ship.shield !== null) {
+						game.rootScene.removeChild(ship.shield);
+						ship.shield = null;
+					}
+					if (brakesToggle) {
+						brakesToggle = false;
 						brakesPressed = false;
 					}
-				}
-				if (brakesToggle) {
-					ship.speed = 3.5;						
-					barBlue.filling.addValue(-0.9);
+					if (ship.missile !== null) {
+						ship.explodeMissile();
+					}
+					disableTimer -= 1;
 				}
 				else {
-					ship.speed = 7;
-					barBlue.filling.addValue(0.5);
+					if (ship.missile === null) {
+						barGray.filling.addValue(4/9);
+					}
+					if (controller.buttons[CONT_INPUT.lstick] === 1) {
+						brakesPressed = true;
+					}
+					else {
+						if (brakesPressed) {
+							brakesToggle = !brakesToggle;
+							brakesPressed = false;
+						}
+					}
+					if (brakesToggle) {
+						ship.speed = 3.5;						
+						barBlue.filling.addValue(-0.9);
+					}
+					else {
+						ship.speed = 7;
+						barBlue.filling.addValue(0.5);
+					}
+					if (controller.buttons[CONT_INPUT.b] === 1 && ship.bulletTimer >= 10) {
+						if (ship.checkComponent(GunImage)) {
+							if (barRed.filling.power === 100) {
+								game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI / 2));
+								game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI * 7 / 16));
+								game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI * 3 / 8));
+								game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI * 5 / 16));
+								game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI / 4));
+								game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI * 9 / 16));
+								game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI * 5 / 8));
+								game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI * 11 / 16));
+								game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI * 3 / 4));
+								ship.bulletTimer = 0;
+								barRed.filling.addValue(-28);
+							}
+							else {
+								game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI / 2));
+								game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI * 0.42));
+								game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI * 0.58));
+								ship.bulletTimer = 0;
+								barRed.filling.addValue(-17);
+							}
+						}
+					}
+					barRed.filling.addValue(.5);
+					if (controller.buttons[CONT_INPUT.a] === 1) {
+						if (ship.shield === null) {
+							if (ship.checkComponent(ShieldImage)) {
+								ship.shield = new Shield();
+								game.rootScene.addChild(ship.shield);
+							}
+						}
+						else {
+							barGreen.filling.addValue(-3);
+						}
+					}
+					else if (controller.buttons[CONT_INPUT.a] === 0) {
+						if (ship.shield !== null) {
+							game.rootScene.removeChild(ship.shield);
+							ship.shield = null;
+						}
+						barGreen.filling.addValue(0.5);
+					}
+					if (controller.buttons[CONT_INPUT.rstick] === 1) {
+						if (ship.checkComponent(MissileImage)) {
+							if (ship.missile === null && ship.missilePrimed) {
+								var y = controller.axes[CONT_INPUT.rstick_y] < -0.5 ? 5 : -5;
+								ship.missile = new PlayerMissile(0, y);
+								game.rootScene.addChild(ship.missile);
+								barGray.filling.addValue(-35);
+
+							}
+							else if (ship.explosionPrimed) {
+								ship.explodeMissile();
+							}
+						}
+					}
+					else if (controller.buttons[CONT_INPUT.rstick] === 0) {
+						if (ship.missile !== null) {
+							ship.explosionPrimed = true;
+						}
+						ship.missilePrimed = true;
+					}
+					if (controller.buttons[CONT_INPUT.y] === 1) {
+						if (ship.checkComponent(GeneratorImage)) {
+							barYellow.filling.checkticker();
+						}
+					}
+					else if (controller.buttons[CONT_INPUT.y] === 0 && barYellow.filling.released === false){
+						if (ship.checkComponent(GeneratorImage)) {
+							barYellow.filling.releaseticker();
+						}
+					}
+				}
+				if (controller.buttons[CONT_INPUT.lt] === 1 && game.currentScene == game.rootScene) {
+					game.assets['sounds/Inception.mp3'].play();
+					bgm.pause();
+					game.pushScene(new PulseScene());
 				}
 				if (controller.axes[CONT_INPUT.lstick_x] > 0.5 || controller.axes[CONT_INPUT.lstick_x] < -0.5) {
 					ship.x += controller.axes[CONT_INPUT.lstick_x] * ship.speed;
@@ -1102,87 +1220,7 @@ window.onload = function() {
 					ship.y += controller.axes[CONT_INPUT.lstick_y] * ship.speed;
 					ship.updateComponents();
 				}
-				if (controller.buttons[CONT_INPUT.b] === 1 && ship.bulletTimer >= 10) {
-					if (ship.checkComponent(GunImage)) {
-						if (barRed.filling.power === 100) {
-							game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI / 2));
-							game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI * 7 / 16));
-							game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI * 3 / 8));
-							game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI * 5 / 16));
-							game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI / 4));
-							game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI * 9 / 16));
-							game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI * 5 / 8));
-							game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI * 11 / 16));
-							game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI * 3 / 4));
-							ship.bulletTimer = 0;
-							barRed.filling.addValue(-28);
-						}
-						else {
-							game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI / 2));
-							game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI * 0.42));
-							game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI * 0.58));
-							ship.bulletTimer = 0;
-							barRed.filling.addValue(-17);
-						}
-					}
-				}
-				barRed.filling.addValue(.5);
-				if (controller.buttons[CONT_INPUT.a] === 1) {
-					if (ship.shield === null) {
-						if (ship.checkComponent(ShieldImage)) {
-							ship.shield = new Shield();
-							game.rootScene.addChild(ship.shield);
-						}
-					}
-					else {
-						barGreen.filling.addValue(-3);
-					}
-				}
-				else if (controller.buttons[CONT_INPUT.a] === 0) {
-					if (ship.shield !== null) {
-						game.rootScene.removeChild(ship.shield);
-						ship.shield = null;
-					}
-					barGreen.filling.addValue(0.5);
-				}
-				if (controller.buttons[CONT_INPUT.rstick] === 1) {
-					if (ship.checkComponent(MissileImage)) {
-						if (ship.missile === null && ship.missilePrimed) {
-							var y = controller.axes[CONT_INPUT.rstick_y] < -0.5 ? 5 : -5;
-							ship.missile = new PlayerMissile(0, y);
-							game.rootScene.addChild(ship.missile);
-							barGray.filling.addValue(-35);
 
-						}
-						else if (ship.explosionPrimed) {
-							ship.explodeMissile();
-						}
-					}
-				}
-				else if (controller.buttons[CONT_INPUT.rstick] === 0) {
-					if (ship.missile !== null) {
-						ship.explosionPrimed = true;
-					}
-					ship.missilePrimed = true;
-				}
-				if (ship.missile === null) {
-					barGray.filling.addValue(40/90);
-				}
-				if (controller.buttons[CONT_INPUT.y] === 1) {
-					if (ship.checkComponent(GeneratorImage)) {
-						barYellow.filling.checkticker();
-					}
-				}
-				else if (controller.buttons[CONT_INPUT.y] === 0 && barYellow.filling.released === false){
-					if (ship.checkComponent(GeneratorImage)) {
-						barYellow.filling.releaseticker();
-					}
-				}
-				if (controller.buttons[CONT_INPUT.lt] === 1 && game.currentScene == game.rootScene) {
-					game.assets['sounds/Inception.mp3'].play();
-					bgm.pause();
-					game.pushScene(new PulseScene());
-				}
 				if (controller.buttons[CONT_INPUT.rt] === 1 && !chooseComponent) {
 					chooseComponent = true;
 				}
