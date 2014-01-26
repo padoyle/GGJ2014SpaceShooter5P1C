@@ -161,12 +161,13 @@ var Filling = Class.create(Sprite, {
 			if (this.ticker.intersect(this)) {
 				this.ticker.image = this.ticker.goodImage;
 				this.ticker.colorTimer = 30;
-				barRed.filling.addValue(15);
-				barGreen.filling.addValue(15);
-				barGray.filling.addValue(15);
-				barBlue.filling.addValue(15);
+				barRed.filling.addValue(30);
+				barGreen.filling.addValue(30);
+				barGray.filling.addValue(30);
+				barBlue.filling.addValue(30);
 			}
-			else if (Math.abs(this.ticker.x - this.x) < 20) {
+			else if (Math.abs((this.ticker.x + this.ticker.width / 2)
+							 - (this.x + this.width / 2)) < 20) {
 				this.ticker.image = this.ticker.goodImage;
 				this.ticker.colorTimer = 30;
 				barRed.filling.addValue(5);
@@ -860,11 +861,11 @@ window.onload = function() {
 				energy = (enemies.length > 20 ? 20 : enemies.length) / 20;
 				aud.adaptpattern(stress, energy);
 			}
-			if (game.rootScene.age % 600 === 0 && game.rootScene.age > 1) {
-				game.assets['sounds/Inception.mp3'].play();
-				aud.resumepause();
-				game.pushScene(new PulseScene());
-			}
+			// if (game.rootScene.age % 600 === 0 && game.rootScene.age > 1) {
+			// 	game.assets['sounds/Inception.mp3'].play();
+			// 	aud.resumepause();
+			// 	game.pushScene(new PulseScene());
+			// }
 			
 			updateControllers();
 
@@ -895,11 +896,11 @@ window.onload = function() {
 						}
 					}
 					if (brakesToggle) {
-						ships[k].speed = 2.5;						
+						ships[k].speed = 3.5;						
 						barBlue.filling.addValue(-0.9);
 					}
 					else {
-						ships[k].speed = 6;
+						ships[k].speed = 7;
 						barBlue.filling.addValue(0.5);
 					}
 					if (controllers[k].axes[CONT_INPUT.lstick_x] > 0.5 || controllers[k].axes[CONT_INPUT.lstick_x] < -0.5) {
@@ -971,6 +972,11 @@ window.onload = function() {
 						if (ships[k].checkComponent(GeneratorImage)) {
 							barYellow.filling.releaseticker();
 						}
+					}
+					else if (controllers[k].buttons[CONT_INPUT.lt] === 1 && game.currentScene == game.rootScene) {
+						game.assets['sounds/Inception.mp3'].play();
+						aud.resumepause();
+						game.pushScene(new PulseScene());
 					}
 				}
 			}
