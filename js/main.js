@@ -84,14 +84,14 @@ var Ticker = Class.create(Sprite, {
 	}
 });
 var Filling = Class.create(Sprite, {
-	initialize: function(x, y, isYellow) {
-		if (isYellow) {
+	initialize: function(x, y, color) {
+		if (color === "yellow") {
 			Sprite.call(this, 15, 15);
 		}
 		else {
 			Sprite.call(this, 118, 15);
 		}
-		this.isYellow = isYellow;
+		this.color = color;
 		this.x = x + 3;
 		this.y = y + 3;
 		this.speed = 1;
@@ -111,7 +111,14 @@ var Filling = Class.create(Sprite, {
 		}
 	},
 	onenterframe: function() {
-		if (this.isYellow) {
+		if (this.color === "yellow") {
+			if (!getShips()[0].checkComponent(GeneratorImage)) {
+				this.ticker.visible = false;
+				return;
+			}
+			else {
+				this.ticker.visible = true;
+			}
 			this.x += this.speed;
 			this.ticker.x += this.ticker.speed;
 			if (this.ticker.x <= this.minX || this.ticker.x >= this.maxX) {
@@ -122,11 +129,20 @@ var Filling = Class.create(Sprite, {
 			}
 		}
 		else {
+			if (this.color === "red" && !getShips()[0].checkComponent(GunImage)) {
+				this.power = 0;
+			}
+			if (this.color === "green" && !getShips()[0].checkComponent(ShieldImage)) {
+				this.power = 0;
+			}
+			if (this.color === "gray" && !getShips()[0].checkComponent(MissileImage)) {
+				this.power = 0;
+			}
 			this.width = this.power / 100 * 118;
 		}
 	},
 	checkticker: function() {
-		if (this.isYellow && this.ticker.missTimer === 0 && this.released === true) {
+		if (this.color === "yellow" && this.ticker.missTimer === 0 && this.released === true) {
 			if (this.ticker.intersect(this)) {
 				this.ticker.image = this.ticker.goodImage;
 				this.ticker.colorTimer = 30;
@@ -146,7 +162,7 @@ var Filling = Class.create(Sprite, {
 		}
 	},
 	releaseticker: function() {
-		if (this.isYellow) {
+		if (this.color === "yellow") {
 			this.released = true;
 		}
 	}
@@ -733,16 +749,16 @@ window.onload = function() {
 		bg.image = game.assets['images/bg1.png'];
 		
 		barRed = new Bar(80, gameHeight - 50);
-		barRed.filling = new Filling(barRed.x, barRed.y, false);
+		barRed.filling = new Filling(barRed.x, barRed.y, "red");
 		barRed.filling.image = game.assets['images/gui_barRed.png'];
 		barRed.button = new ButtonIcon(barRed.x, barRed.y, CONT_INPUT.b);
 		barRed.button.passiveImage = game.assets['images/gui_buttonB.png'];
 		barRed.button.activeImage = game.assets['images/gui_buttonBH.png'];
 		
 		barYellow = new Bar(245, gameHeight - 50);
-		barYellow.filling = new Filling(barYellow.x, barYellow.y, true);
+		barYellow.filling = new Filling(barYellow.x, barYellow.y, "yellow");
 		barYellow.filling.image = game.assets['images/gui_barYellow0.png'];
-		barYellow.filling2 = new Filling(barYellow.x, barYellow.y, false);
+		barYellow.filling2 = new Filling(barYellow.x, barYellow.y, "gray2");
 		barYellow.filling2.image = game.assets['images/gui_barGray.png'];
 		
 		barYellow.button = new ButtonIcon(barYellow.x, barYellow.y, CONT_INPUT.y);
@@ -750,21 +766,21 @@ window.onload = function() {
 		barYellow.button.activeImage = game.assets['images/gui_buttonYH.png'];
 		
 		barGreen = new Bar(410, gameHeight - 50);
-		barGreen.filling = new Filling(barGreen.x, barGreen.y, false);
+		barGreen.filling = new Filling(barGreen.x, barGreen.y, "green");
 		barGreen.filling.image = game.assets['images/gui_barGreen.png'];
 		barGreen.button = new ButtonIcon(barGreen.x, barGreen.y, CONT_INPUT.a);
 		barGreen.button.passiveImage = game.assets['images/gui_buttonA.png'];
 		barGreen.button.activeImage = game.assets['images/gui_buttonAH.png'];
 		
 		barBlue = new Bar(170, gameHeight - 100);
-		barBlue.filling = new Filling(barBlue.x, barBlue.y, false);
+		barBlue.filling = new Filling(barBlue.x, barBlue.y, "blue");
 		barBlue.filling.image = game.assets['images/gui_barBlue.png'];
 		barBlue.button = new ButtonIcon(barBlue.x, barBlue.y, CONT_INPUT.lstick);
 		barBlue.button.passiveImage = game.assets['images/gui_buttonL.png'];
 		barBlue.button.activeImage = game.assets['images/gui_buttonLH.png'];
 		
 		barGray = new Bar(335, gameHeight - 100);
-		barGray.filling = new Filling(barGray.x, barGray.y, false);
+		barGray.filling = new Filling(barGray.x, barGray.y, "gray");
 		barGray.filling.image = game.assets['images/gui_barGray.png'];
 		barGray.button = new ButtonIcon(barGray.x, barGray.y, CONT_INPUT.rstick);
 		barGray.button.passiveImage = game.assets['images/gui_buttonR.png'];
