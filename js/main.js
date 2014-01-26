@@ -336,6 +336,10 @@ var Ship = Class.create(Sprite, {
 		this.speed = 3;
 		this.x = x;
 		this.y = 360;
+		this.hitBox = new Sprite(20, 20);
+		this.hitBox.x = this.x + 15;
+		this.hitBox.y = this.y + 15;
+		game.rootScene.addChild(this.hitBox);
 		this.healthBar = new HealthBar();
 		this.healthBar.x = this.x;
 		this.healthBar.y = this.y + this.height + 5;
@@ -378,6 +382,8 @@ var Ship = Class.create(Sprite, {
 			if (this.x > gameWidth - this.width) {
 				this.x = gameWidth - this.width;
 			}
+			this.hitBox.x = this.x + 10;
+			this.hitBox.y = this.y + 10;
 		});
 	},
 	updateComponents: function() {
@@ -622,7 +628,7 @@ var Bullet = Class.create(Sprite, {
 	},
 	onenterframe: function() {
 		var ship = getShip();
-		if (ship !== null && ship.intersect(this)) {
+		if (ship !== null && ship.hitBox.intersect(this)) {
 			if (ship.shield === null) {
 				ship.health -= this.damage;
 				ship.updateComponents();
@@ -662,7 +668,7 @@ var EnemyBullet = Class.create(Bullet, {
 		if (ship !== null && ship.shield !== null && ship.shield.intersect(this)) {
 			game.rootScene.removeChild(this);
 		}
-		else if (ship !== null && ship.intersect(this)) {
+		else if (ship !== null && ship.hitBox.intersect(this)) {
 			ship.health -= this.damage;
 			ship.updateComponents();
 			game.rootScene.removeChild(this);
@@ -735,7 +741,7 @@ var PlayerMissile = Class.create(Bullet, {
 			ship.explodeMissile();
 			return;
 		}
-		else if (ship.intersect(this) && this.timer > 45) {
+		else if (ship.hitBox.intersect(this) && this.timer > 45) {
 			ship.explodeMissile();
 			return;
 		}
