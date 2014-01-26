@@ -51,6 +51,21 @@ var HealthBar = Class.create(Sprite, {
 		this.opacity = .8;
 	}
 });
+var Ticker = Class.create(Sprite, {
+	initialize: function(x, y) {
+		Sprite.call(this, 6, 15);
+		this.x = x;
+		this.y = y + 3;
+		this.speed = 4;
+		this.missTimer = 120;
+		this.image = game.assets['images/gui_barTick.png'];
+	},
+	enterframe: function() {
+		if (this.missTimer < 120) {
+			this.missTimer = 120;
+		}
+	}
+});
 var Filling = Class.create(Sprite, {
 	initialize: function(x, y, isYellow) {
 		if (isYellow) {
@@ -62,15 +77,40 @@ var Filling = Class.create(Sprite, {
 		this.isYellow = isYellow;
 		this.x = x + 3;
 		this.y = y + 3;
+		this.speed = 2;
+		this.minX = x;
+		this.maxX = x + 112; // These are used for yellow bar
+		this.ticker = new Ticker(x, y);
 		this.power = 100;
 	},
 	onenterframe: function() {
 		if (this.isYellow) {
-			this.width = this.power / 100 * 15;
+			this.x += this.speed;
+			this.ticker.x += this.ticker.speed;
+			if (this.ticker.x <= this.minX || this.ticker.x >= this.maxX) {
+				this.ticker.speed *= -1;
+			}
+			if (this.x <= this.minX || this.x >= this.maxX) {
+				this.speed *= -1;
+			}
 		}
 		else {
 			this.width = this.power / 100 * 118;
 		}
+	},
+	checkticker: function() {
+		if (this.isYellow) {
+			if (this.ticker.intersect(this)) {
+				return "hit";
+			}
+			else if (Math.abs(this.ticker.x - this.x) < 20) {
+				return "near";
+			}
+			else {
+				return "miss";
+			}
+		}
+		return "Not Yellow";
 	}
 });
 var HitImage = Class.create(Sprite, {
@@ -641,7 +681,7 @@ window.onload = function() {
 		'images/gui_buttonY.png', 'images/gui_buttonB.png', 'images/gui_buttonRH.png',
 		'images/gui_buttonAH.png', 'images/gui_buttonBH.png', 'images/gui_buttonYH.png',
 		'images/gui_buttonLH.png', 'images/gui_barHealth.png', 'images/gui_buttonHit0.png',
-		'images/gui_buttonHit1.png');
+		'images/gui_buttonHit1.png', 'images/gui_barTick.png');
 	
 	game.fps = 60;
 	game.scale = 1;
@@ -702,6 +742,7 @@ window.onload = function() {
 		game.rootScene.addChild(barYellow);
 		game.rootScene.addChild(barYellow.filling);
 		game.rootScene.addChild(barYellow.button);
+		game.rootScene.addChild(barYellow.filling.ticker);
 		game.rootScene.addChild(barGreen);
 		game.rootScene.addChild(barGreen.filling);
 		game.rootScene.addChild(barGreen.button);
@@ -808,6 +849,12 @@ window.onload = function() {
 								game.rootScene.addChild(new PlayerMissile(0, y, k));
 							}
 						}
+					}
+					if (controllers[k].buttons[CONT_INPUT.y] === 1) {
+						if (ships[k].checkComponent(GeneratorImage)) {
+							console.log(barYellow.filling.checkticker());
+						}
+						
 					}
 				}
 			}
