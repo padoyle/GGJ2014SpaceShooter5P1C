@@ -149,12 +149,18 @@ var Filling = Class.create(Sprite, {
 			if (this.ticker.intersect(this)) {
 				this.ticker.image = this.ticker.goodImage;
 				this.ticker.colorTimer = 30;
-				//ADD ENERGYYYYY
+				barRed.filling.addValue(15);
+				barGreen.filling.addValue(15);
+				barGray.filling.addValue(15);
+				barBlue.filling.addValue(15);
 			}
 			else if (Math.abs(this.ticker.x - this.x) < 20) {
 				this.ticker.image = this.ticker.goodImage;
 				this.ticker.colorTimer = 30;
-				//ADD ENERGYYYYY
+				barRed.filling.addValue(5);
+				barGreen.filling.addValue(5);
+				barGray.filling.addValue(5);
+				barBlue.filling.addValue(5);
 			}
 			else {
 				this.ticker.colorTimer = 60;
