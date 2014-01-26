@@ -155,19 +155,15 @@ Ship = Class.create(Sprite, {
 		this.components = [];
 		var shieldImage = new ShieldImage(this.x, this.y, this.number);
 		this.components.push(shieldImage);
-		game.rootScene.addChild(shieldImage);
 		
 		var missileImage = new MissileImage(this.x, this.y, this.number);
 		this.components.push(missileImage);
-		game.rootScene.addChild(missileImage);
 		
 		var gunImage = new GunImage(this.x, this.y, this.number);
 		this.components.push(gunImage);
-		game.rootScene.addChild(gunImage);
 		
 		var generatorImage = new GeneratorImage(this.x, this.y, this.number);
 		this.components.push(generatorImage);
-		game.rootScene.addChild(generatorImage);
 		
 		this.addEventListener('enterframe', function() {
 			healthDisplays[this.number].text = "Health" + this.number + ": " + this.health;
@@ -219,6 +215,13 @@ Ship = Class.create(Sprite, {
 			}
 		}
 		return false;
+	},
+	drawComponents: function() {
+		for (var w = 0; w < this.components.length; w++) {
+			if (this.components[w]) {
+				game.rootScene.addChild(this.components[w]);
+			}
+		}
 	}
 });
 
@@ -601,6 +604,7 @@ window.onload = function() {
 			healthDisplays[k].x = gameWidth - 65;
 			healthDisplays[k].y = k * 30;
 			game.rootScene.addChild(healthDisplays[k]);
+			ships[k].drawComponents();
 		}
 		healthDisplay = new Label("Health: ");
 		healthDisplay.color = 'white';
