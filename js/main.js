@@ -306,6 +306,7 @@ var Enemy = Class.create(Sprite, {
         this.velX = Math.cos(this.move.direction) * this.move.speed;
         this.velY = Math.sin(this.move.direction) * this.move.speed;
         this.onScreen = false;
+        this.health = 5;
     },
 
     onenterframe: function () {
@@ -334,15 +335,15 @@ var Enemy = Class.create(Sprite, {
             }
 
             if (this.move.duration === 0) {
-            	var bx = this.x + this.width / 2;
-            	var by = this.y + this.height / 2;
-            	var dir_start = 90 - this.move.angle / 2;
-            	var dir_shift = this.move.angle / (this.move.bullets - 1);
-            	console.log(dir_start, dir_shift);
-            	for (var i = 0; i < this.move.bullets; i++) {
-            		var bullet = new EnemyBullet(bx, by, 2, dir_start + dir_shift * i);
-            		game.rootScene.addChild(bullet);
-            	}
+                var bx = this.x + this.width / 2;
+                var by = this.y + this.height / 2;
+                var dir_start = 90 - this.move.angle / 2;
+                var dir_shift = this.move.angle / (this.move.bullets - 1);
+                console.log(dir_start, dir_shift);
+                for (var i = 0; i < this.move.bullets; i++) {
+                    var bullet = new EnemyBullet(bx, by, 2, dir_start + dir_shift * i);
+                    game.rootScene.addChild(bullet);
+                }
             }
 
             if (this.y > gameHeight) {
