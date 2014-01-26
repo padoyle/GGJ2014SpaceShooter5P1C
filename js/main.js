@@ -174,8 +174,8 @@ Ship = Class.create(Sprite, {
 			if (this.y < 0) {
 				this.y = 0;
 			}	
-			if (this.y > gameWidth - this.height) {
-				this.y = gameWidth - this.height;
+			if (this.y > gameWidth + this.height) {
+				this.y = gameWidth + this.height;
 			}
 			if (this.x < 0) {
 				this.x = 0;
@@ -358,7 +358,7 @@ var PlayerBullet = Class.create(Bullet, {
 		this.x = _x - this.width/2;
 		this.y = _y - this.height;
 		this.velX = 0;
-		this.velY = -5;
+		this.velY = -12;
 	}
 });
 
@@ -589,7 +589,7 @@ window.onload = function() {
 						ships[k].y += controllers[k].axes[CONT_INPUT.lstick_y] * ships[k].speed;
 						ships[k].updateComponents();
 					}
-					if (controllers[k].buttons[CONT_INPUT.b] === 1 && ships[k].bulletTimer >= 30) {
+					if (controllers[k].buttons[CONT_INPUT.b] === 1 && ships[k].bulletTimer >= 10) {
 						game.rootScene.addChild(new PlayerBullet(ships[k].x + ships[k].width/2, ships[k].y, k));
 						ships[k].bulletTimer = 0;
 					}
