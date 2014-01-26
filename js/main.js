@@ -28,7 +28,6 @@ var CONT_INPUT = {
 var game = null;
 var enemies = []; // all enemies
 var ships = []; // all ships
-var healthDisplays = [];
 var scalingDifficultyNumber = 1;
 var energy = 0;
 var stress = 0;
@@ -76,9 +75,14 @@ var BG = Class.create(Sprite, {
 		}
 	}
 });
+var HealthBar = Class.create(Sprite, {
+	initialize: function() {
+		Sprite.call(this, 49, 5);
+		this.opacity = .8;
+	}
+});
 var Filling = Class.create(Sprite, {
 	initialize: function(x, y, isYellow) {
-		console.log(isYellow);
 		if (isYellow) {
 			Sprite.call(this, 15, 15);
 		}
@@ -203,6 +207,10 @@ Ship = Class.create(Sprite, {
 		this.speed = 3;
 		this.x = x;
 		this.y = 360;
+		this.healthBar = new HealthBar();
+		this.healthBar.x = this.x;
+		this.healthBar.y = this.y + this.height + 5;
+		this.healthBar.image = game.assets['images/gui_barHealth.png'];
 		this.bulletTimer = 30;
 		this.shield = null;
 		this.missileExists = false;
@@ -219,8 +227,9 @@ Ship = Class.create(Sprite, {
 		var generatorImage = new GeneratorImage(this.x, this.y, this.number);
 		this.components.push(generatorImage);
 		
+		this.updateComponents();
+		
 		this.addEventListener('enterframe', function() {
-			healthDisplays[this.number].text = "Health" + this.number + ": " + this.health;
 			if (this.health <= 0) {
 				ships[this.number] = null;
 				this.removeComponents();
@@ -245,12 +254,17 @@ Ship = Class.create(Sprite, {
 		for (var f = 0; f < this.components.length; f++) {
 			this.components[f].update();
 		}
+		this.healthBar.x = this.x;
+		this.healthBar.y = this.y + 5 + this.height;
+		this.healthBar.width = (this.health / this.maxHealth) * 49;
+		console.log(this.healthBar.x  + " " + this.healthBar.y);
 	},
 	removeComponents: function() {
 		for (var g = 0; g < this.components.length; g++) {
 			game.rootScene.removeChild(this.components[g]);
 		}
 		this.components = [];
+		game.rootScene.removeChild(this.healthBar);
 	},
 	removeComponent: function(clazz) {
 		for (var r = 0; r < this.components.length; r++) {
@@ -276,6 +290,7 @@ Ship = Class.create(Sprite, {
 				game.rootScene.addChild(this.components[w]);
 			}
 		}
+		game.rootScene.addChild(this.healthBar);
 	}
 });
 
@@ -401,6 +416,7 @@ var Bullet = Class.create(Sprite, {
 			if (ships[k] !== null && ships[k].intersect(this)) {
 				if (ships[k].shield === null) {
 					ships[k].health -= this.damage;
+					ships[k].updateComponents();
 				}
 				game.rootScene.removeChild(this);
 			}
@@ -441,6 +457,7 @@ var EnemyBullet = Class.create(Bullet, {
 			}
 			else if (ships[k] !== null && ships[k].intersect(this)) {
 				ships[k].health -= this.damage;
+				ships[k].updateComponents();
 				game.rootScene.removeChild(this);
 			}
 		}
@@ -491,6 +508,7 @@ var PlayerMissile = Class.create(Bullet, {
 			else if (ships[k] !== null && ships[k].intersect(this) && this.timer > 45) {
 				ships[this.controller].missileExists = false;
 				ships[k].health -= this.damage;
+				ships[k].updateComponents();
 				game.rootScene.removeChild(this);
 			}
 		}
@@ -551,6 +569,7 @@ var PulseScene = Class.create(Scene, {
 			for (var v = 0; v < this.somethingDied.length; v++) {
 				if (!this.somethingDied[v] && getShips()[v]) {
 					getShips()[v].health = 0;
+					getShips()[v].updateComponents();
 				}
 			}
 			if (!this.somethingDied) {
@@ -630,7 +649,7 @@ window.onload = function() {
 		'images/gui_buttonR.png', 'images/gui_buttonL.png', 'images/gui_buttonA.png',
 		'images/gui_buttonY.png', 'images/gui_buttonB.png', 'images/gui_buttonRH.png',
 		'images/gui_buttonAH.png', 'images/gui_buttonBH.png', 'images/gui_buttonYH.png',
-		'images/gui_buttonLH.png');
+		'images/gui_buttonLH.png', 'images/gui_barHealth.png');
 	
 	game.fps = 60;
 	game.scale = 1;
@@ -710,11 +729,6 @@ window.onload = function() {
 		for (var k = 0; controllers[k] !== undefined; k++) {
 			ships[k] = new Ship(k * 100, k);
 			game.rootScene.addChild(ships[k]);
-			healthDisplays[k] = new Label("Health " + k + ": " + ships[k].health);
-			healthDisplays[k].color = 'white';
-			healthDisplays[k].x = gameWidth - 65;
-			healthDisplays[k].y = k * 30;
-			game.rootScene.addChild(healthDisplays[k]);
 			ships[k].drawComponents();
 		}
 		healthDisplay = new Label("Health: ");
