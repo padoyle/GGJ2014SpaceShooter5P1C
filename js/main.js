@@ -34,13 +34,12 @@ var energy = 0;
 var stress = 0;
 
 var Move = Class.create({
-	initialize: function(_direction, _speed, _duration, _bullets, _bulletSpeed, _rotation) {
+	initialize: function(_direction, _speed, _duration, _bullets, _angle) {
 		this.direction = _direction;
 		this.speed = _speed;
 		this.duration = _duration;
 		this.bullets = _bullets;
-		this.bulletSpeedl = _bulletSpeed;
-		this.rotation = _rotation;
+		this.angle = _angle;
 	}
 });
 
@@ -80,17 +79,24 @@ var BG = Class.create(Sprite, {
 
 var enemy_movesets = {
 	set1 : new MoveSet(new Array(
-				new Move(0, 2, 60, 3, 0),
+				new Move(0, 2, 60, 3, 90),
 				new Move((11.0 / 4.0) * Math.PI, 1.5, 30, 0, 0),
 				new Move((13.0 / 4.0) * Math.PI, 4, 30, 0, 0),
 				new Move((1.0 / 2.0) * Math.PI, 2, 60, 0, 0))),
 	set2 : new MoveSet(new Array(
-				new Move(0, 3, 40, 4, 0),
+				new Move(0, 3, 40, 4, 90),
 				new Move((15.0 / 4.0) * Math.PI, 0.5, 60, 0, 0),
 				new Move(0.5 * Math.PI, 2, 40, 0, 0),
-				new Move(Math.PI, 3, 40, 4, 0),
+				new Move(Math.PI, 3, 40, 4, 90),
 				new Move((13.0 / 4.0) * Math.PI, 0.5, 60, 0, 0),
-				new Move(0.5 * Math.PI, 2, 40, 0, 0)))
+				new Move(0.5 * Math.PI, 2, 40, 0, 0))),
+	set3 : new MoveSet(new Array(
+				new Move(0.25 * Math.PI, 2, 60, 0, 0),
+				new Move(0, 0, 0, 5, 90),
+				new Move(0, 0, 60, 0, 0),
+				new Move(0.75 * Math.PI, 2, 60, 0, 0),
+				new Move(0, 0, 0, 5, 120),
+				new Move(0, 0, 60, 0, 0)))
 };
 
 var Component = Class.create(Sprite, {
@@ -243,7 +249,6 @@ var Enemy = Class.create(Sprite, {
         this.velX = Math.cos(this.move.direction) * this.move.speed;
         this.velY = Math.sin(this.move.direction) * this.move.speed;
         this.onScreen = false;
-        this.health = 5;
     },
 
     onenterframe: function () {
@@ -266,9 +271,21 @@ var Enemy = Class.create(Sprite, {
                 this.velY = Math.sin(this.move.direction) * this.move.speed;
             }
 
-            if (this.move_progress % (this.move.duration / this.move.bullets) === 0) {
-                var bullet = new EnemyBullet(this.x + this.width / 2, this.y + this.height / 2, 2);
+            if (this.move.bullets > 0 && this.move_progress % (this.move.duration / this.move.bullets) === 0) {
+                var bullet = new EnemyBullet(this.x + this.width / 2, this.y + this.height / 2, 2, this.move.angle);
                 game.rootScene.addChild(bullet);
+            }
+
+            if (this.move.duration === 0) {
+            	var bx = this.x + this.width / 2;
+            	var by = this.y + this.height / 2;
+            	var dir_start = 90 - this.move.angle / 2;
+            	var dir_shift = this.move.angle / (this.move.bullets - 1);
+            	console.log(dir_start, dir_shift);
+            	for (var i = 0; i < this.move.bullets; i++) {
+            		var bullet = new EnemyBullet(bx, by, 2, dir_start + dir_shift * i);
+            		game.rootScene.addChild(bullet);
+            	}
             }
 
             if (this.y > gameHeight) {
@@ -302,6 +319,13 @@ var Enemy2 = Class.create(Enemy, {
 	initialize: function(_x, _y) {
 		Enemy.call(this, enemy_movesets.set2.clone(), _x, _y);
 		this.image = getAssets()['images/enemy2.png'];
+	}
+});
+
+var Enemy3 = Class.create(Enemy, {
+	initialize: function(_x, _y) {
+		Enemy.call(this, enemy_movesets.set3.clone(), _x, _y);
+		this.image = getAssets()['images/enemy3.png'];
 	}
 });
 
@@ -339,14 +363,16 @@ var Bullet = Class.create(Sprite, {
 });
 
 var EnemyBullet = Class.create(Bullet, {
-	initialize: function(_x, _y, _damage) {
+	initialize: function(_x, _y, _damage, _direction) {
 		Bullet.call(this, 8, 15);
 		this.image = getAssets()['images/bullet2.png'];
 		this.damage = _damage;
+		this.rotate(_direction + 90);
 		this.x = _x - this.width/2;
 		this.y = _y - this.height/2;
-		this.velX = 0;
-		this.velY = 5;
+		var dir_rad = (Math.PI * _direction) / 180;
+		this.velX = Math.cos(dir_rad) * 5;
+		this.velY = Math.sin(dir_rad) * 5;
 	},
 	
 	onenterframe: function() {
@@ -540,7 +566,7 @@ window.onload = function() {
 		'images/player_missile.png', 'images/playerShip1.png', 'images/player_shield.png',
 		'images/pulse.png', 'sounds/Inception.mp3', 'images/playerShip_base.png',
 		'images/playerShip_drive.png', 'images/playerShip_generator.png', 'images/playerShip_guns.png',
-		'images/playerShip_missile.png', 'images/playerShip_shields.png');
+		'images/playerShip_missile.png', 'images/playerShip_shields.png', 'images/enemy3.png');
 	
 	game.fps = 60;
 	game.scale = 1;
@@ -580,11 +606,11 @@ window.onload = function() {
 		healthDisplay.color = 'white';
 		healthDisplay.x = gameWidth - 60;
 
-		addEnemy(new Enemy1(75, 30));
-		addEnemy(new Enemy1(225, 30));
-		addEnemy(new Enemy1(375, 30));
-		addEnemy(new Enemy2(150, 30));
-		addEnemy(new Enemy2(300, 30));
+		// addEnemy(new Enemy1(75, 30));
+		// addEnemy(new Enemy1(225, 30));
+		// addEnemy(new Enemy1(375, 30));
+		// addEnemy(new Enemy2(150, 30));
+		// addEnemy(new Enemy2(300, 30));
 				
 		game.rootScene.addEventListener('enterframe', function(e) {
 			var gameOver = true;
@@ -611,8 +637,9 @@ window.onload = function() {
 			
 			updateControllers();
 
-			if (enemies[enemies.length - 1].onScreen) {
+			if (enemies.length == 0 || enemies[enemies.length - 1].onScreen) {
 			    LoadFormation0();
+			    LoadFormation1();
 			}
 			for (i = 0; i < enemies.length; i++) {
 			    if (enemies[i].y > gameHeight) {
@@ -637,7 +664,7 @@ window.onload = function() {
 						ships[k].x += controllers[k].axes[CONT_INPUT.lstick_x] * ships[k].speed;
 						ships[k].updateComponents();
 					}
-					if (controllers[k].axes[CONT_INPUT.lstick_y] > 0.5 || controllers[k].axes[CONT_INPUT.lstick_y] < -0.5) {
+					else if (controllers[k].axes[CONT_INPUT.lstick_y] > 0.5 || controllers[k].axes[CONT_INPUT.lstick_y] < -0.5) {
 						ships[k].y += controllers[k].axes[CONT_INPUT.lstick_y] * ships[k].speed;
 						ships[k].updateComponents();
 					}
