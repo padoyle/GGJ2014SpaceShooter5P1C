@@ -158,6 +158,7 @@ var Enemy = Class.create(Sprite, {
         this.velX = Math.cos(this.move.direction) * this.move.speed;
         this.velY = Math.sin(this.move.direction) * this.move.speed;
         this.onScreen = false;
+        this.health = 5;
     },
 
     onenterframe: function () {
