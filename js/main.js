@@ -32,36 +32,6 @@ var scalingDifficultyNumber = 1;
 var energy = 0;
 var stress = 0;
 
-var Move = Class.create({
-	initialize: function(_direction, _speed, _duration, _bullets, _angle) {
-		this.direction = _direction;
-		this.speed = _speed;
-		this.duration = _duration;
-		this.bullets = _bullets;
-		this.angle = _angle;
-	}
-});
-
-var MoveSet = Class.create({
-	initialize: function(_moves, _repeat) {
-		this.moves = _moves;
-		this.repeat = _repeat;
-		this.current = -1;
-		this.total = _moves.length;
-	},
-
-	nextMove: function() {
-		this.current++;
-		if (this.current >= this.total)
-			this.current = 0;
-		return this.moves[this.current];
-	},
-
-	clone: function() {
-		return new MoveSet(this.moves);
-	}
-});
-
 var BG = Class.create(Sprite, {
 	initialize: function() {
 		Sprite.call(this, gameWidth, gameHeight * 2);
@@ -158,28 +128,6 @@ var Bar = Class.create(Sprite, {
 		this.button;
 	}
 });
-
-var enemy_movesets = {
-	set1 : new MoveSet(new Array(
-				new Move(0, 2, 60, 3, 90),
-				new Move((11.0 / 4.0) * Math.PI, 1.5, 30, 0, 0),
-				new Move((13.0 / 4.0) * Math.PI, 4, 30, 0, 0),
-				new Move((1.0 / 2.0) * Math.PI, 2, 60, 0, 0))),
-	set2 : new MoveSet(new Array(
-				new Move(0, 3, 40, 4, 90),
-				new Move((15.0 / 4.0) * Math.PI, 0.5, 60, 0, 0),
-				new Move(0.5 * Math.PI, 2, 40, 0, 0),
-				new Move(Math.PI, 3, 40, 4, 90),
-				new Move((13.0 / 4.0) * Math.PI, 0.5, 60, 0, 0),
-				new Move(0.5 * Math.PI, 2, 40, 0, 0))),
-	set3 : new MoveSet(new Array(
-				new Move(0.25 * Math.PI, 2, 60, 0, 0),
-				new Move(0, 0, 0, 5, 90),
-				new Move(0, 0, 60, 0, 0),
-				new Move(0.75 * Math.PI, 2, 60, 0, 0),
-				new Move(0, 0, 0, 5, 120),
-				new Move(0, 0, 60, 0, 0)))
-};
 
 var Component = Class.create(Sprite, {
 	initialize: function(x, y, shipNum) {
@@ -308,13 +256,13 @@ Ship = Class.create(Sprite, {
 		}
 		return false;
 	},
-	drainComponent: function(clazz, _amount) {
-		for (var t = 0; t < this.component.length; t++) {
-			if (this.components[t] instanceof clazz) {
-				this.components[t].drainEnergy(_amount);
-			}
-		}
-	}
+	// drainComponent: function(clazz, _amount) {
+	// 	for (var t = 0; t < this.component.length; t++) {
+	// 		if (this.components[t] instanceof clazz) {
+	// 			this.components[t].drainEnergy(_amount);
+	// 		}
+	// 	}
+	// },
 	drawComponents: function() {
 		for (var w = 0; w < this.components.length; w++) {
 			if (this.components[w]) {
@@ -780,12 +728,6 @@ window.onload = function() {
 		healthDisplay.color = 'white';
 		healthDisplay.x = gameWidth - 60;
 
-		// addEnemy(new Enemy1(75, 30));
-		// addEnemy(new Enemy1(225, 30));
-		// addEnemy(new Enemy1(375, 30));
-		// addEnemy(new Enemy2(150, 30));
-		// addEnemy(new Enemy2(300, 30));
-				
 		game.rootScene.addEventListener('enterframe', function(e) {
 			var gameOver = true;
 			for (var q = 0; q < ships.length; q++) {
@@ -838,7 +780,7 @@ window.onload = function() {
 						ships[k].x += controllers[k].axes[CONT_INPUT.lstick_x] * ships[k].speed;
 						ships[k].updateComponents();
 					}
-					else if (controllers[k].axes[CONT_INPUT.lstick_y] > 0.5 || controllers[k].axes[CONT_INPUT.lstick_y] < -0.5) {
+					if (controllers[k].axes[CONT_INPUT.lstick_y] > 0.5 || controllers[k].axes[CONT_INPUT.lstick_y] < -0.5) {
 						ships[k].y += controllers[k].axes[CONT_INPUT.lstick_y] * ships[k].speed;
 						ships[k].updateComponents();
 					}
@@ -846,7 +788,6 @@ window.onload = function() {
 						if (ships[k].checkComponent(GunImage)) {
 							game.rootScene.addChild(new PlayerBullet(ships[k].x + ships[k].width/2, ships[k].y, k));
 							ships[k].bulletTimer = 0;
-							ships[k].
 						}
 					}
 					if (controllers[k].buttons[CONT_INPUT.a] === 1 && ships[k].shield === null) {
