@@ -231,6 +231,7 @@ var EnemyBullet = Class.create(Bullet, {
 		this.velX = 0;
 		this.velY = 5;
 	},
+	
 	onenterframe: function() {
 		var ships = getShips();
 		for (var k = 0; k < ships.length; k++) {
@@ -262,7 +263,7 @@ var PlayerBullet = Class.create(Bullet, {
 
 var PlayerMissile = Class.create(Bullet, {
 	initialize: function(velocityX, velocityY, controllerNum) {
-		Bullet.call(this, 15, 15);
+		Bullet.call(this, 20, 44);
 		this.image = getAssets()['images/player_missile.png'];
 		this.timer = 0;
 		this.damage = 5;
