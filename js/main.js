@@ -77,7 +77,7 @@ var BG = Class.create(Sprite, {
 });
 var HealthBar = Class.create(Sprite, {
 	initialize: function() {
-		Sprite.call(this, 49, 5);
+		Sprite.call(this, 49, 10);
 		this.opacity = .8;
 	}
 });
@@ -103,6 +103,20 @@ var Filling = Class.create(Sprite, {
 		}
 	}
 });
+var HitImage = Class.create(Sprite, {
+	initialize: function(x, y, big) {
+		if (big) {
+			Sprite.call(this, 41, 39);
+			this.x = x - 3;
+			this.y = y - 4;
+		}
+		else {
+			Sprite.call(this, 35, 35);
+			this.x = x;
+			this.y = y - 2.5;
+		}
+	}
+});
 var ButtonIcon = Class.create(Sprite, {
 	initialize: function(x, y, buttonNum) {
 		Sprite.call(this, 30, 30);
@@ -111,15 +125,25 @@ var ButtonIcon = Class.create(Sprite, {
 		this.x = x - 35;
 		this.y = y - 5;
 		this.buttonNum = buttonNum;
+		if (buttonNum > CONT_INPUT.lb) {
+			this.hitImage = new HitImage(this.x, this.y, true);
+			this.hitImage.image = game.assets['images/gui_buttonHit1.png'];
+		}
+		else {
+			this.hitImage = new HitImage(this.x, this.y, false);
+			this.hitImage.image = game.assets['images/gui_buttonHit0.png'];
+		}
 	},
 	onenterframe: function() {
 		updateControllers();
 		if (controllers[0]) {
 			if (controllers[0].buttons[this.buttonNum] === 1) {
 				this.image = this.activeImage;
+				game.rootScene.addChild(this.hitImage);
 			}
 			else {
 				this.image = this.passiveImage;
+				game.rootScene.removeChild(this.hitImage);
 			}
 		}
 	}
@@ -649,7 +673,8 @@ window.onload = function() {
 		'images/gui_buttonR.png', 'images/gui_buttonL.png', 'images/gui_buttonA.png',
 		'images/gui_buttonY.png', 'images/gui_buttonB.png', 'images/gui_buttonRH.png',
 		'images/gui_buttonAH.png', 'images/gui_buttonBH.png', 'images/gui_buttonYH.png',
-		'images/gui_buttonLH.png', 'images/gui_barHealth.png');
+		'images/gui_buttonLH.png', 'images/gui_barHealth.png', 'images/gui_buttonHit0.png',
+		'images/gui_buttonHit1.png');
 	
 	game.fps = 60;
 	game.scale = 1;
@@ -676,6 +701,7 @@ window.onload = function() {
 		barYellow = new Bar(245, gameHeight - 50);
 		barYellow.filling = new Filling(barYellow.x, barYellow.y, true);
 		barYellow.filling.image = game.assets['images/gui_barYellow0.png'];
+		
 		barYellow.button = new ButtonIcon(barYellow.x, barYellow.y, CONT_INPUT.y);
 		barYellow.button.passiveImage = game.assets['images/gui_buttonY.png'];
 		barYellow.button.activeImage = game.assets['images/gui_buttonYH.png'];
