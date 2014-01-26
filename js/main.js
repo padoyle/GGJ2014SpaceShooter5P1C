@@ -26,10 +26,9 @@ var CONT_INPUT = {
 };
 
 var game = null;
+var bgm = null;
 var enemies = []; // all enemies
 var scalingDifficultyNumber = 1;
-var energy = 0;
-var stress = 0;
 var functions = [];
 
 var barRed;
@@ -37,6 +36,12 @@ var barBlue;
 var barGreen;
 var barYellow;
 var barGray;
+
+var onlineSound;
+var offlineSound;
+var soundTimer = 0;
+var soundsList = [];
+var online = true;
 
 var brakesToggle = false;
 var brakesPressed = false;
@@ -294,11 +299,17 @@ var Component = Class.create(Sprite, {
 		Sprite.call(this, 50, 51);
 		this.x = x;
 		this.y = y;
+		this.sound = null;
 	},
 	update: function() {
 		if (getShip() !== undefined && getShip().health > 0) {
 			this.x = getShip().x;
 			this.y = getShip().y;
+		}
+	},
+	playSound: function() {
+		if (this.sound !== null) {
+			this.sound.play();
 		}
 	}
 });
@@ -306,24 +317,28 @@ var ShieldImage = Class.create(Component, {
 	initialize: function(x, y) {
 		Component.call(this, x, y);
 		this.image = getAssets()['images/playerShip_shields.png'];
+		this.sound = getAssets()['sounds/shield.mp3'];
 	}
 });
 var MissileImage = Class.create(Component, {
 	initialize: function(x, y) {
 		Component.call(this, x, y);
 		this.image = getAssets()['images/playerShip_missile.png'];
+		this.sound = getAssets()['sounds/missiles.mp3'];
 	}
 });
 var GunImage = Class.create(Component, {
 	initialize: function(x, y) {
 		Component.call(this, x, y);
 		this.image = getAssets()['images/playerShip_guns.png'];
+		this.sound = getAssets()['sounds/lazers.mp3'];
 	}
 });
 var GeneratorImage = Class.create(Component, {
 	initialize: function(x, y) {
 		Component.call(this, x, y);
 		this.image = getAssets()['images/playerShip_generator.png'];
+		this.sound = getAssets()['sounds/generator.mp3'];
 	}
 });
 
@@ -407,6 +422,9 @@ var Ship = Class.create(Sprite, {
 			if (this.components[r] instanceof clazz) {
 				game.rootScene.removeChild(this.components[r]);
 				this.components.splice(r, 1);
+				soundsList.push(new clazz(0, 0).sound);
+				soundTimer += 45;
+				online = false;
 				return true;
 			}
 		}
@@ -419,6 +437,14 @@ var Ship = Class.create(Sprite, {
 			}
 		}
 		return false;
+	},
+	addComponent: function(clazzz) {
+		if (!checkComponent(clazzz)) {
+			soundsList.push(new clazzz(0, 0).sound);
+			soundTimer += 45;
+			online = true;
+			this.components.push(new clazz(this.x, this.y, this.number));
+		}
 	},
 	drawComponents: function() {
 		for (var w = 0; w < this.components.length; w++) {
@@ -815,7 +841,7 @@ var PulseScene = Class.create(Scene, {
 					getShip().updateComponents();
 				}
 			}
-			aud.resumepause();
+			bgm.play();
 			game.popScene();
 		}
 		if (this.timer > 30) {
@@ -887,10 +913,15 @@ window.onload = function() {
 		'images/gui_buttonHit1.png', 'images/gui_barTick.png', 'images/gui_barTick1.png',
 		'images/gui_barTick2.png', 'images/explosion0.png', 'images/explosion1.png',
 		'images/explosion2.png', 'sounds/explosion0.mp3', 'images/gui_barFrame_Flash.png',
-		'images/gui_barFrame_FlashRed.png', 'images/gui_barFrame_FlashGreen.png');
+		'images/gui_barFrame_FlashRed.png', 'images/gui_barFrame_FlashGreen.png',
+		'sounds/generator.mp3', 'sounds/shield.mp3', 'sounds/missiles.mp3',
+		'sounds/offline.mp3', 'sounds/online.mp3', 'sounds/lazers.mp3',
+		'sounds/HELLISTHEBULLET12614.wav');
 	
 	game.fps = 60;
 	game.scale = 1;
+	
+	bgm = game.assets['sounds/HELLISTHEBULLET12614.wav'];
 
 	var ship;
 
@@ -902,11 +933,14 @@ window.onload = function() {
 		var label, bg, bar;
 
         FunctionSetup();
-		label = new Label("TWENTY Players.  FOUR controller.");
+		label = new Label("FIVE Players.  ONE controller.");
 		label.color = 'white';
 		
 		bg = new BG();
 		bg.image = game.assets['images/bg1.png'];
+		
+		onlineSound = game.assets['sounds/online.mp3'];
+		offlineSound = game.assets['sounds/offline.mp3'];
 		
 		barRed = new Bar(80, gameHeight - 50);
 		barRed.filling = new Filling(barRed.x, barRed.y, "red");
@@ -971,11 +1005,9 @@ window.onload = function() {
 		
 		updatecontroller();
 		
-		var seed = Math.random() * 10000;
-		aud.generatepattern(stress, energy, 8, true, seed);
-		aud.playstop();
-		console.log(seed);
-
+		bgm = game.assets['sounds/HELLISTHEBULLET12614.wav'];
+		bgm.play();
+		
 		ship = new Ship(100);
 		game.rootScene.addChild(ship);
 		ship.drawComponents();
@@ -990,13 +1022,29 @@ window.onload = function() {
 				gameOver = false;
 			}
 			if (gameOver) {
-				aud.playstop();
+				bgm.stop()
 				game.stop();
 			}
-			if (ship !== null && game.rootScene.age % 120 === 0) {
-				stress = 1 - ship.health / ship.maxHealth;
-				energy = (enemies.length > 20 ? 20 : enemies.length) / 20;
-				aud.adaptpattern(stress, energy);
+			
+			if (bgm.currentTime >= bgm.duration) {
+				bgm.play();
+			}
+			
+			if (soundTimer !== 0) {
+				if (soundTimer === 1) {
+					if (online) {
+						onlineSound.play();
+					}
+					else {
+						offlineSound.play();
+					}
+				}
+				else if (soundTimer % 45 === 0) {
+					soundsList[0].play();
+					soundsList.splice(soundsList[0], 1);
+				}
+				console.log(soundTimer);
+				soundTimer--;
 			}
 			
 			updatecontroller();
@@ -1116,7 +1164,7 @@ window.onload = function() {
 				}
 				else if (controller.buttons[CONT_INPUT.lt] === 1 && game.currentScene == game.rootScene) {
 					game.assets['sounds/Inception.mp3'].play();
-					aud.resumepause();
+					bgm.pause();
 					game.pushScene(new PulseScene());
 				}
 			}
