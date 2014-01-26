@@ -127,7 +127,7 @@ var Filling = Class.create(Sprite, {
 	},
 	onenterframe: function() {
 		if (this.color === "yellow") {
-			if (getShip().checkComponent(GeneratorImage)) {
+			if (!getShip().checkComponent(GeneratorImage)) {
 				this.ticker.visible = false;
 				return;
 			}
@@ -344,7 +344,6 @@ var Ship = Class.create(Sprite, {
 		this.healthBar.x = this.x;
 		this.healthBar.y = this.y + 5 + this.height;
 		this.healthBar.width = (this.health / this.maxHealth) * 49;
-		console.log(this.healthBar.x  + " " + this.healthBar.y);
 	},
 	removeComponents: function() {
 		for (var g = 0; g < this.components.length; g++) {
@@ -433,7 +432,7 @@ var Enemy = Class.create(Sprite, {
 
             if (this.move.bullets > 0 && this.move_progress % (this.move.duration / this.move.bullets) === 0) {
                 var bullet = new EnemyBullet(this.x + this.width / 2, this.y + this.height / 2, 2, this.move.angle);
-                game.rootScene.addChild(bullet);
+                game.rootScene.insertBefore(bullet, this);
             }
 
             if (this.move.duration === 0) {
@@ -444,7 +443,7 @@ var Enemy = Class.create(Sprite, {
                 console.log(dir_start, dir_shift);
                 for (i = 0; i < this.move.bullets; i++) {
                     bullet = new EnemyBullet(bx, by, 2, dir_start + dir_shift * i);
-                    game.rootScene.addChild(bullet);
+ 	               game.rootScene.insertBefore(bullet, this);
                 }
             }
 
@@ -479,7 +478,7 @@ var Enemy1 = Class.create(Enemy, {
 var Enemy2 = Class.create(Enemy, {
 	initialize: function(_x, _y) {
 		Enemy.call(this, enemy_movesets.set2.clone(), _x, _y);
-		this.image = getAssets()['images/enemy2.png'];
+		this.image = getAssets()['images/enemy2_2.png'];
 		this.health = 10;
 	}
 });
@@ -503,7 +502,7 @@ var Enemy4 = Class.create(Enemy, {
 var Enemy5 = Class.create(Enemy, {
     initialize: function (_x, _y) {
         Enemy.call(this, enemy_movesets.set6.clone(), _x, _y);
-        this.image = getAssets()['images/enemy2.png'];
+        this.image = getAssets()['images/enemy2_2.png'];
         this.health = 6;
     }
 });
@@ -527,7 +526,7 @@ var Enemy7 = Class.create(Enemy, {
 var Enemy8 = Class.create(Enemy, {
     initialize: function (_x, _y) {
         Enemy.call(this, enemy_movesets.set9.clone(), _x, _y);
-        this.image = getAssets()['images/enemy2.png'];
+        this.image = getAssets()['images/enemy2_2.png'];
         this.health = 6;
     }
 });
@@ -596,8 +595,8 @@ var Bullet = Class.create(Sprite, {
 
 var EnemyBullet = Class.create(Bullet, {
 	initialize: function(_x, _y, _damage, _direction) {
-		Bullet.call(this, 8, 15);
-		this.image = getAssets()['images/bullet2.png'];
+		Bullet.call(this, 16, 28);
+		this.image = getAssets()['images/enemy_bullet.png'];
 		this.damage = _damage;
 		this.rotate(_direction + 90);
 		this.x = _x - this.width/2;
@@ -785,7 +784,7 @@ window.onload = function() {
 	game = new Game(gameWidth, gameHeight);
 	game.preload(
 		'images/bg1.png', 'images/Square.png', 'images/player_bullet.png',
-		'images/bullet2.png', 'images/enemy1.png', 'images/enemy2.png',
+		'images/enemy_bullet.png', 'images/enemy1.png', 'images/enemy2_2.png',
 		'images/player_missile.png', 'images/playerShip1.png', 'images/player_shield.png',
 		'images/pulse.png', 'sounds/Inception.mp3', 'images/playerShip_base.png',
 		'images/playerShip_drive.png', 'images/playerShip_generator.png', 'images/playerShip_guns.png',
