@@ -534,14 +534,15 @@ var EnemyBullet = Class.create(Bullet, {
 });
 
 var PlayerBullet = Class.create(Bullet, {
-	initialize: function(_x, _y, shipNum) {
+	initialize: function(_x, _y, angle, shipNum) {
 		Bullet.call(this, 16, 28);
 		this.image = getAssets()['images/player_bullet.png'];
 		this.damage = 1;
+		this.angle = angle;
 		this.x = _x - this.width/2;
 		this.y = _y - this.height;
-		this.velX = 0;
-		this.velY = -10;
+		this.velX = 10 * Math.cos(this.angle);
+		this.velY = 10 * Math.sin(this.angle);
 	}
 });
 
@@ -861,12 +862,25 @@ window.onload = function() {
 						ships[k].y += controllers[k].axes[CONT_INPUT.lstick_y] * ships[k].speed;
 						ships[k].updateComponents();
 					}
-					if (controllers[k].buttons[CONT_INPUT.b] === 1 && ships[k].bulletTimer >= 10) {
+					if (controllers[k].buttons[CONT_INPUT.b] === 1 && ships[k].bulletTimer >= 10 && barRed.filling.power >= 20) {
 						if (ships[k].checkComponent(GunImage)) {
-							game.rootScene.addChild(new PlayerBullet(ships[k].x + ships[k].width/2, ships[k].y, k));
-							ships[k].bulletTimer = 0;
+							if (barRed.filling.power === 100) {
+								game.rootScene.addChild(new PlayerBullet(ships[k].x + ships[k].width/2, ships[k].y, -Math.PI / 2, k));
+								game.rootScene.addChild(new PlayerBullet(ships[k].x + ships[k].width/2, ships[k].y, -Math.PI * 3 / 8, k));
+								game.rootScene.addChild(new PlayerBullet(ships[k].x + ships[k].width/2, ships[k].y, -Math.PI / 4, k));
+								game.rootScene.addChild(new PlayerBullet(ships[k].x + ships[k].width/2, ships[k].y, -Math.PI * 5 / 8, k));
+								game.rootScene.addChild(new PlayerBullet(ships[k].x + ships[k].width/2, ships[k].y, -Math.PI * 3 / 4, k));
+								ships[k].bulletTimer = 0;
+								barRed.filling.addValue(-25);
+							}
+							else {
+								game.rootScene.addChild(new PlayerBullet(ships[k].x + ships[k].width/2, ships[k].y, -Math.PI / 2, k));
+								ships[k].bulletTimer = 0;
+								barRed.filling.addValue(-10);
+							}
 						}
 					}
+					barRed.filling.addValue(.5);
 					if (controllers[k].buttons[CONT_INPUT.a] === 1) {
 						if (ships[k].shield === null) {
 							if (ships[k].checkComponent(ShieldImage)) {
