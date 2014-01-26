@@ -23,13 +23,15 @@ var CONT_INPUT = {
 	lstick_y: 1,
 	rstick_x: 2,
 	rstick_y: 3
-}
+};
 
 var game = null;
 var enemies = []; // all enemies
 var ships = []; // all ships
 var healthDisplays = [];
-var missileExists = [false, false, false, false];
+var scalingDifficultyNumber = 1;
+var energy = 0;
+var stress = 0;
 
 var Move = Class.create({
 	initialize: function(_direction, _speed, _duration, _bullets, _bulletSpeed, _rotation) {
@@ -89,20 +91,23 @@ var enemy_movesets = {
 				new Move(Math.PI, 3, 40, 4, 0),
 				new Move((13.0 / 4.0) * Math.PI, 0.5, 60, 0, 0),
 				new Move(0.5 * Math.PI, 2, 40, 0, 0)))
-}
+};
 
 
 Ship = Class.create(Sprite, {
 	initialize: function(x, shipNum) {
-		Sprite.call(this, 30, 30);
-		this.image = getAssets()['images/Square.png'];
+		Sprite.call(this, 49, 41);
+		this.image = getAssets()['images/playerShip1.png'];
 		this.number = shipNum;
-		this.frame = 0;
+		this.frame = 0; 
 		this.health = 10;
+		this.maxHealth = 10; //If health is balanced, change this too
 		this.speed = 3;
 		this.x = x;
 		this.y = 360;
 		this.bulletTimer = 30;
+		this.shield = null;
+		this.missileExists = false;
 		this.addEventListener('enterframe', function() {
 			healthDisplays[this.number].text = "Health" + this.number + ": " + this.health;
 			if (this.health <= 0) {
@@ -126,66 +131,90 @@ Ship = Class.create(Sprite, {
 	}
 });
 
-var Enemy = Class.create(Sprite, {
-	initialize: function(_moveset, _x) {
-		Sprite.call(this, 50, 50);
+var Shield = Class.create(Sprite, {
+	initialize: function(shipNum) {
+		Sprite.call(this, 71, 64);
+		this.image = game.assets['images/player_shield.png'];
+		this.ship = shipNum;
 		this.frame = 0;
-		this.moveset = _moveset;
-		this.move = this.moveset.nextMove();
-		this.move_progress = 0;
-		this.x = _x;
-		this.y = 50;
-		this.velX = Math.cos(this.move.direction) * this.move.speed;
-		this.velY = Math.sin(this.move.direction) * this.move.speed;
+		this.x = getShips()[this.ship].x - 10;
+		this.y = getShips()[this.ship].y - 12;
 	},
-
 	onenterframe: function() {
-		if (this.health <= 0) {
-			var i = enemies.indexOf(this);
-			enemies.splice(i, 1);
-			game.rootScene.removeChild(this);
-		}
-		if (this.move_progress >= this.move.duration) {
-			this.move = this.moveset.nextMove();
-			this.move_progress = 0;
-			this.velX = Math.cos(this.move.direction) * this.move.speed;
-			this.velY = Math.sin(this.move.direction) * this.move.speed;
-		}
-
-		if (this.move_progress % (this.move.duration / this.move.bullets) === 0) {
-			var bullet = new EnemyBullet(this.x + this.width/2, this.y + this.height/2, 2);
-			game.rootScene.addChild(bullet);
-		}
-
-		if (this.y > gameHeight - this.height) {
-			this.y = gameHeight - this.height;
-		}
-		if (this.y < 0) {
-			this.y = 0;
-		}
-		if (this.x < 0) {
-			this.x = 0;
-		}
-		if (this.x > gameWidth - this.width) {
-			this.x = gameWidth - this.width;
-		}
-		this.x += this.velX;
-		this.y += this.velY;
-
-		this.move_progress++;
+		this.x = getShips()[this.ship].x - 10;
+		this.y = getShips()[this.ship].y - 12;
 	}
 });
 
+var Enemy = Class.create(Sprite, {
+    initialize: function (_moveset, _x, _y) {
+        Sprite.call(this, 50, 50);
+        this.frame = 0;
+        this.moveset = _moveset;
+        this.move = this.moveset.nextMove();
+        this.move_progress = 0;
+        this.x = _x;
+        this.y = _y;
+        this.velX = Math.cos(this.move.direction) * this.move.speed;
+        this.velY = Math.sin(this.move.direction) * this.move.speed;
+        this.onScreen = false;
+    },
+
+    onenterframe: function () {
+        if (this.onScreen === false) {
+            this.y += 0.5 * scalingDifficultyNumber;
+            if (this.y >= 0) {
+                this.onScreen = true;
+            }
+        }
+        else {
+            if (this.health <= 0) {
+                var i = enemies.indexOf(this);
+                enemies.splice(i, 1);
+                game.rootScene.removeChild(this);
+            }
+            if (this.move_progress >= this.move.duration) {
+                this.move = this.moveset.nextMove();
+                this.move_progress = 0;
+                this.velX = Math.cos(this.move.direction) * this.move.speed;
+                this.velY = Math.sin(this.move.direction) * this.move.speed;
+            }
+
+            if (this.move_progress % (this.move.duration / this.move.bullets) === 0) {
+                var bullet = new EnemyBullet(this.x + this.width / 2, this.y + this.height / 2, 2);
+                game.rootScene.addChild(bullet);
+            }
+
+            if (this.y > gameHeight) {
+            }
+
+            if (this.y < 0) {
+                this.y = 0;
+            }
+            if (this.x < 0) {
+                this.x = 0;
+            }
+            if (this.x > gameWidth - this.width) {
+                this.x = gameWidth - this.width;
+            }
+            this.x += this.velX;
+            this.y += this.velY;
+
+            this.move_progress++;
+        }
+    }
+});
+
 var Enemy1 = Class.create(Enemy, {
-	initialize: function(_x) {
-		Enemy.call(this, enemy_movesets.set1.clone(), _x);
+	initialize: function(_x, _y) {
+		Enemy.call(this, enemy_movesets.set1.clone(), _x, _y);
 		this.image = getAssets()['images/enemy1.png'];
 	}
 });
 
 var Enemy2 = Class.create(Enemy, {
-	initialize: function(_x) {
-		Enemy.call(this, enemy_movesets.set2.clone(), _x);
+	initialize: function(_x, _y) {
+		Enemy.call(this, enemy_movesets.set2.clone(), _x, _y);
 		this.image = getAssets()['images/enemy2.png'];
 	}
 });
@@ -202,12 +231,14 @@ var Bullet = Class.create(Sprite, {
 		var ships = getShips();
 		for (var k = 0; k < ships.length; k++) {
 			if (ships[k] !== null && ships[k].intersect(this)) {
-				ships[k].health -= this.damage;
+				if (ships[k].shield === null) {
+					ships[k].health -= this.damage;
+				}
 				game.rootScene.removeChild(this);
 			}
 		}
 		for (var j = 0; j < enemies.length; j++) {
-			if (enemies[j].intersect(this)) {
+			if (enemies[j].intersect(this) && enemies[j].onScreen) {
 				enemies[j].health -= this.damage;
 				game.rootScene.removeChild(this);
 			}
@@ -235,7 +266,10 @@ var EnemyBullet = Class.create(Bullet, {
 	onenterframe: function() {
 		var ships = getShips();
 		for (var k = 0; k < ships.length; k++) {
-			if (ships[k] !== null && ships[k].intersect(this)) {
+			if (ships[k] !== null && ships[k].shield !== null && ships[k].shield.intersect(this)) {
+				game.rootScene.removeChild(this);
+			}
+			else if (ships[k] !== null && ships[k].intersect(this)) {
 				ships[k].health -= this.damage;
 				game.rootScene.removeChild(this);
 			}
@@ -280,16 +314,20 @@ var PlayerMissile = Class.create(Bullet, {
 		var ships = getShips();
 		this.timer++;
 		for (var k = 0; k < ships.length; k++) {
-			if (ships[k] !== null && ships[k].intersect(this) && this.timer > 30) {
-				missileExists[this.controller] = false;
+			if (ships[k] !== null && ships[k].shield !== null && ships[k].shield.intersect(this) && this.timer > 45) {
+				ships[this.controller].missileExists = false;
+				game.rootScene.removeChild(this);
+			}
+			else if (ships[k] !== null && ships[k].intersect(this) && this.timer > 45) {
+				ships[this.controller].missileExists = false;
 				ships[k].health -= this.damage;
 				game.rootScene.removeChild(this);
 			}
 		}
 		
 		for (var j = 0; j < enemies.length; j++) {
-			if (enemies[j].intersect(this)) {
-				missileExists[this.controller] = false;
+			if (enemies[j].intersect(this) && enemies[j].onScreen) {
+				ships[this.controller].missileExists = false;
 				enemies[j].health -= this.damage;
 				game.rootScene.removeChild(this);
 			}
@@ -298,7 +336,7 @@ var PlayerMissile = Class.create(Bullet, {
 		this.y += this.velY;
 		if (this.y > gameHeight || this.y < -this.height
 		 || this.x > gameWidth || this.x < -this.width) {
-			missileExists[this.controller] = false;
+			ships[this.controller].missileExists = false;
 			game.rootScene.removeChild(this);
 		}
 		else {
@@ -322,6 +360,9 @@ var PlayerMissile = Class.create(Bullet, {
 var gameWidth = 600;
 var gameHeight = 720;
 
+var controller = null;
+var formations = [];
+
 var controllers = [];
 function updateControllers()
 {
@@ -331,13 +372,13 @@ function updateControllers()
 }
 
 function getAssets() {
-	if (game != null) {
+	if (game !== null) {
 		return game.assets;
 	}
 }
 
 function getShips() {
-	if (game != null) {
+	if (game !== null) {
 		return game.getShips();
 	}
 }
@@ -353,20 +394,19 @@ window.onload = function() {
 	game.preload(
 		'images/bg1.png', 'images/Square.png', 'images/player_bullet.png',
 		'images/bullet2.png', 'images/enemy1.png', 'images/enemy2.png',
-		'images/player_missile.png');
+		'images/player_missile.png', 'images/playerShip1.png', 'images/player_shield.png');
 	
 	game.fps = 60;
 	game.scale = 1;
 
 	game.getShips = function() {
 		return ships;
-	}
+	};
 
 	game.onload = function() {
 		var label, bg;
-		label = new Label("TWENTY Players.  FOUR Controller.");
+		label = new Label("TWENTY Players.  FOUR Controllers.");
 		label.color = 'white';
-
 		
 		bg = new BG();
 		bg.image = game.assets['images/bg1.png'];
@@ -375,6 +415,11 @@ window.onload = function() {
 		game.rootScene.addChild(label);
 		
 		updateControllers();
+		
+		var seed = Math.random() * 10000;
+		aud.generatepattern(stress, energy, 8, true, seed);
+		aud.playstop();
+		console.log(seed);
 
 		for (var k = 0; controllers[k] !== undefined; k++) {
 			ships[k] = new Ship(k * 100, k);
@@ -389,24 +434,43 @@ window.onload = function() {
 		healthDisplay.color = 'white';
 		healthDisplay.x = gameWidth - 60;
 
-		addEnemy(new Enemy1(75));
-		addEnemy(new Enemy1(225));
-		addEnemy(new Enemy1(375));
-		addEnemy(new Enemy2(150));
-		addEnemy(new Enemy2(300));
+		addEnemy(new Enemy1(75, 30));
+		addEnemy(new Enemy1(225, 30));
+		addEnemy(new Enemy1(375, 30));
+		addEnemy(new Enemy2(150, 30));
+		addEnemy(new Enemy2(300, 30));
 				
 		game.rootScene.addEventListener('enterframe', function(e) {
 			var gameOver = true;
-			for (var k = 0; k < ships.length; k++) {
-				if (ships[k] !== null && ships[k].health > 0) {
+			for (var q = 0; q < ships.length; q++) {
+				if (ships[q] !== null && ships[q].health > 0) {
 					gameOver = false;
 					break;
 				}
 			}
 			if (gameOver) {
+				aud.playstop();
 				game.stop();
 			}
+			if (ships[0] !== null && game.rootScene.age % 120 === 0) {
+				stress = 1 - ships[0].health / ships[0].maxHealth;
+				energy = (enemies.length > 20 ? 20 : enemies.length) / 20;
+				aud.adaptpattern(stress, energy);
+			}
+			
 			updateControllers();
+
+			if (enemies[enemies.length - 1].onScreen) {
+			    LoadFormation0();
+			}
+			for (i = 0; i < enemies.length; i++) {
+			    if (enemies[i].y > gameHeight) {
+			        game.rootScene.removeChild(enemies[i]);
+			        enemies.splice(i, 1);
+			        i--;
+			    }
+			}
+
 			for (var k = 0; controllers[k] !== undefined; k++) {
 				if (ships[k] === null) {
 					continue;
@@ -424,13 +488,21 @@ window.onload = function() {
 					if (controllers[k].axes[CONT_INPUT.lstick_y] > 0.5 || controllers[k].axes[CONT_INPUT.lstick_y] < -0.5) {
 						ships[k].y += controllers[k].axes[CONT_INPUT.lstick_y] * ships[k].speed;
 					}
-					if (controllers[k].buttons[CONT_INPUT.a] === 1 && ships[k].bulletTimer >= 30) {
+					if (controllers[k].buttons[CONT_INPUT.b] === 1 && ships[k].bulletTimer >= 30) {
 						game.rootScene.addChild(new PlayerBullet(ships[k].x + ships[k].width/2, ships[k].y, k));
 						ships[k].bulletTimer = 0;
 					}
+					if (controllers[k].buttons[CONT_INPUT.a] === 1 && ships[k].shield === null) {
+						ships[k].shield = new Shield(k);
+						game.rootScene.addChild(ships[k].shield);
+					}
+					else if (controllers[k].buttons[CONT_INPUT.a] === 0 && ships[k].shield !== null) {
+						game.rootScene.removeChild(ships[k].shield);
+						ships[k].shield = null;
+					}
 					if (controllers[k].buttons[CONT_INPUT.rstick] === 1) {
-						if (missileExists[k] === false) {
-							missileExists[k] = true;
+						if (ships[k].missileExists === false) {
+							ships[k].missileExists = true;
 							var y = controllers[k].axes[CONT_INPUT.rstick_y] < -0.5 ? 5 : -5;
 							game.rootScene.addChild(new PlayerMissile(0, y, k));
 						}
@@ -438,7 +510,6 @@ window.onload = function() {
 				}
 			}
 		});
-	}
-
-	game.start();
-}
+	};
+    game.start();
+};
