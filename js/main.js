@@ -864,6 +864,27 @@ var PulseScene = Class.create(Scene, {
 	}
 });
 
+var StartScene = Class.create(Scene, {
+	initialize: function() {
+		Scene.apply(this);
+		
+		var sprite = new Sprite(600, 720);
+		sprite.image = game.assets['images/start.png'];
+		this.addChild(sprite);
+		game.pushScene(this);
+	},
+		
+	onenterframe: function() {
+		updatecontroller();
+		if (controller !== undefined) {
+			if (controller.buttons[CONT_INPUT.start] === 1) {
+				// Call game state
+				game.popScene();
+			}
+		}
+	}
+});
+
 var gameWidth = 600;
 var gameHeight = 720;
 
@@ -916,7 +937,7 @@ window.onload = function() {
 		'images/gui_barFrame_FlashRed.png', 'images/gui_barFrame_FlashGreen.png',
 		'sounds/generator.mp3', 'sounds/shield.mp3', 'sounds/missiles.mp3',
 		'sounds/offline.mp3', 'sounds/online.mp3', 'sounds/lazers.mp3',
-		'sounds/HELLISTHEBULLET.wav');
+		'sounds/HELLISTHEBULLET.wav', 'images/start.png');
 	
 	game.fps = 60;
 	game.scale = 1;
@@ -931,6 +952,7 @@ window.onload = function() {
 
 	game.onload = function() {
 		var label, bg, bar;
+		var startScreen = new StartScene();
 
         FunctionSetup();
 		label = new Label("FIVE Players.  ONE controller.");
