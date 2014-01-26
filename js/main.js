@@ -916,12 +916,12 @@ window.onload = function() {
 		'images/gui_barFrame_FlashRed.png', 'images/gui_barFrame_FlashGreen.png',
 		'sounds/generator.mp3', 'sounds/shield.mp3', 'sounds/missiles.mp3',
 		'sounds/offline.mp3', 'sounds/online.mp3', 'sounds/lazers.mp3',
-		'sounds/HELLISTHEBULLET12614.wav');
+		'sounds/HELLISTHEBULLET.wav');
 	
 	game.fps = 60;
 	game.scale = 1;
 	
-	bgm = game.assets['sounds/HELLISTHEBULLET12614.wav'];
+	bgm = game.assets['sounds/HELLISTHEBULLET.wav'];
 
 	var ship;
 
@@ -1005,7 +1005,7 @@ window.onload = function() {
 		
 		updatecontroller();
 		
-		bgm = game.assets['sounds/HELLISTHEBULLET12614.wav'];
+		bgm = game.assets['sounds/HELLISTHEBULLET.wav'];
 		bgm.play();
 		
 		ship = new Ship(100);
