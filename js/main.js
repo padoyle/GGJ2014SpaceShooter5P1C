@@ -30,6 +30,8 @@ var enemies = []; // all enemies
 var ships = []; // all ships
 var healthDisplays = [];
 var scalingDifficultyNumber = 1;
+var energy = 0;
+var stress = 0;
 
 var Move = Class.create({
 	initialize: function(_direction, _speed, _duration, _bullets, _bulletSpeed, _rotation) {
@@ -97,8 +99,9 @@ Ship = Class.create(Sprite, {
 		Sprite.call(this, 49, 41);
 		this.image = getAssets()['images/playerShip1.png'];
 		this.number = shipNum;
-		this.frame = 0;
+		this.frame = 0; 
 		this.health = 10;
+		this.maxHealth = 10; //If health is balanced, change this too
 		this.speed = 3;
 		this.x = x;
 		this.y = 360;
@@ -395,7 +398,7 @@ window.onload = function() {
 		var label, bg;
 		label = new Label("TWENTY Players.  FOUR Controllers.");
 		label.color = 'white';
-
+		
 		bg = new BG();
 		bg.image = game.assets['images/bg1.png'];
 
@@ -403,6 +406,11 @@ window.onload = function() {
 		game.rootScene.addChild(label);
 		
 		updateControllers();
+		
+		var seed = Math.random() * 10000;
+		aud.generatepattern(stress, energy, 8, true, seed);
+		aud.playstop();
+		console.log(seed);
 
 		for (var k = 0; controllers[k] !== undefined; k++) {
 			ships[k] = new Ship(k * 100, k);
@@ -435,6 +443,12 @@ window.onload = function() {
 				aud.playstop();
 				game.stop();
 			}
+			if (ships[0] !== null && game.rootScene.age % 120 === 0) {
+				stress = 1 - ships[0].health / ships[0].maxHealth;
+				energy = (enemies.length > 20 ? 20 : enemies.length) / 20;
+				aud.adaptpattern(stress, energy);
+			}
+			
 			updateControllers();
 			for (var k = 0; controllers[k] !== undefined; k++) {
 				if (ships[k] === null) {
@@ -476,9 +490,5 @@ window.onload = function() {
 			}
 		});
 	};
-	var seed = Math.random() * 10000;
-	aud.generatepattern(.5, .5, 8, true, seed);
-	aud.playstop();
-	console.log(seed);
     game.start();
 };
