@@ -349,6 +349,7 @@ var Enemy = Class.create(Sprite, {
         this.move_progress = 0;
         this.x = _x;
         this.y = _y;
+        this.heatlh = 10;
         this.velX = Math.cos(this.move.direction) * this.move.speed;
         this.velY = Math.sin(this.move.direction) * this.move.speed;
         this.onScreen = false;
@@ -416,6 +417,7 @@ var Enemy1 = Class.create(Enemy, {
 	initialize: function(_x, _y) {
 		Enemy.call(this, enemy_movesets.set1.clone(), _x, _y);
 		this.image = getAssets()['images/enemy1.png'];
+		this.health = 10;
 	}
 });
 
@@ -423,6 +425,7 @@ var Enemy2 = Class.create(Enemy, {
 	initialize: function(_x, _y) {
 		Enemy.call(this, enemy_movesets.set2.clone(), _x, _y);
 		this.image = getAssets()['images/enemy2.png'];
+		this.health = 10;
 	}
 });
 
@@ -430,6 +433,15 @@ var Enemy3 = Class.create(Enemy, {
 	initialize: function(_x, _y) {
 		Enemy.call(this, enemy_movesets.set3.clone(), _x, _y);
 		this.image = getAssets()['images/enemy3_2.png'];
+		this.health = 8;
+	}
+});
+
+var Enemy4 = Class.create(Enemy, {
+	initialize: function(_x, _y) {
+		Enemy.call(this, enemy_movesets.set4.clone(), _x, _y);
+		this.image = getAssets()['images/enemy1.png'];
+		this.health = 6;
 	}
 });
 
