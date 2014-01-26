@@ -38,6 +38,9 @@ var barGreen;
 var barYellow;
 var barGray;
 
+var brakesToggle = false;
+var brakesPressed = false;
+
 var BG = Class.create(Sprite, {
 	initialize: function() {
 		Sprite.call(this, gameWidth, gameHeight * 2);
@@ -84,14 +87,14 @@ var Ticker = Class.create(Sprite, {
 	}
 });
 var Filling = Class.create(Sprite, {
-	initialize: function(x, y, isYellow) {
-		if (isYellow) {
+	initialize: function(x, y, color) {
+		if (color === "yellow") {
 			Sprite.call(this, 15, 15);
 		}
 		else {
 			Sprite.call(this, 118, 15);
 		}
-		this.isYellow = isYellow;
+		this.color = color;
 		this.x = x + 3;
 		this.y = y + 3;
 		this.speed = 1;
@@ -107,11 +110,30 @@ var Filling = Class.create(Sprite, {
 			this.power = 100;
 		}
 		if (this.power < 0) {
+			if (barRed.filling.power > 0) {
+				barRed.filling.addValue(-1);
+			}
+			if (barGreen.filling.power > 0) {
+				barGreen.filling.addValue(-1);
+			}
+			if (barBlue.filling.power > 0) {
+				barBlue.filling.addValue(-1);
+			}
+			if (barGray.filling.power > 0) {
+				barGray.filling.addValue(-1);
+			}
 			this.power = 0;
 		}
 	},
 	onenterframe: function() {
-		if (this.isYellow) {
+		if (this.color === "yellow") {
+			if (!getShips()[0].checkComponent(GeneratorImage)) {
+				this.ticker.visible = false;
+				return;
+			}
+			else {
+				this.ticker.visible = true;
+			}
 			this.x += this.speed;
 			this.ticker.x += this.ticker.speed;
 			if (this.ticker.x <= this.minX || this.ticker.x >= this.maxX) {
@@ -122,20 +144,35 @@ var Filling = Class.create(Sprite, {
 			}
 		}
 		else {
+			if (this.color === "red" && !getShips()[0].checkComponent(GunImage)) {
+				this.power = 0;
+			}
+			if (this.color === "green" && !getShips()[0].checkComponent(ShieldImage)) {
+				this.power = 0;
+			}
+			if (this.color === "gray" && !getShips()[0].checkComponent(MissileImage)) {
+				this.power = 0;
+			}
 			this.width = this.power / 100 * 118;
 		}
 	},
 	checkticker: function() {
-		if (this.isYellow && this.ticker.missTimer === 0 && this.released === true) {
+		if (this.color === "yellow" && this.ticker.missTimer === 0 && this.released === true) {
 			if (this.ticker.intersect(this)) {
 				this.ticker.image = this.ticker.goodImage;
 				this.ticker.colorTimer = 30;
-				//ADD ENERGYYYYY
+				barRed.filling.addValue(15);
+				barGreen.filling.addValue(15);
+				barGray.filling.addValue(15);
+				barBlue.filling.addValue(15);
 			}
 			else if (Math.abs(this.ticker.x - this.x) < 20) {
 				this.ticker.image = this.ticker.goodImage;
 				this.ticker.colorTimer = 30;
-				//ADD ENERGYYYYY
+				barRed.filling.addValue(5);
+				barGreen.filling.addValue(5);
+				barGray.filling.addValue(5);
+				barBlue.filling.addValue(5);
 			}
 			else {
 				this.ticker.colorTimer = 60;
@@ -146,7 +183,7 @@ var Filling = Class.create(Sprite, {
 		}
 	},
 	releaseticker: function() {
-		if (this.isYellow) {
+		if (this.color === "yellow") {
 			this.released = true;
 		}
 	}
@@ -733,16 +770,16 @@ window.onload = function() {
 		bg.image = game.assets['images/bg1.png'];
 		
 		barRed = new Bar(80, gameHeight - 50);
-		barRed.filling = new Filling(barRed.x, barRed.y, false);
+		barRed.filling = new Filling(barRed.x, barRed.y, "red");
 		barRed.filling.image = game.assets['images/gui_barRed.png'];
 		barRed.button = new ButtonIcon(barRed.x, barRed.y, CONT_INPUT.b);
 		barRed.button.passiveImage = game.assets['images/gui_buttonB.png'];
 		barRed.button.activeImage = game.assets['images/gui_buttonBH.png'];
 		
 		barYellow = new Bar(245, gameHeight - 50);
-		barYellow.filling = new Filling(barYellow.x, barYellow.y, true);
+		barYellow.filling = new Filling(barYellow.x, barYellow.y, "yellow");
 		barYellow.filling.image = game.assets['images/gui_barYellow0.png'];
-		barYellow.filling2 = new Filling(barYellow.x, barYellow.y, false);
+		barYellow.filling2 = new Filling(barYellow.x, barYellow.y, "gray2");
 		barYellow.filling2.image = game.assets['images/gui_barGray.png'];
 		
 		barYellow.button = new ButtonIcon(barYellow.x, barYellow.y, CONT_INPUT.y);
@@ -750,21 +787,21 @@ window.onload = function() {
 		barYellow.button.activeImage = game.assets['images/gui_buttonYH.png'];
 		
 		barGreen = new Bar(410, gameHeight - 50);
-		barGreen.filling = new Filling(barGreen.x, barGreen.y, false);
+		barGreen.filling = new Filling(barGreen.x, barGreen.y, "green");
 		barGreen.filling.image = game.assets['images/gui_barGreen.png'];
 		barGreen.button = new ButtonIcon(barGreen.x, barGreen.y, CONT_INPUT.a);
 		barGreen.button.passiveImage = game.assets['images/gui_buttonA.png'];
 		barGreen.button.activeImage = game.assets['images/gui_buttonAH.png'];
 		
 		barBlue = new Bar(170, gameHeight - 100);
-		barBlue.filling = new Filling(barBlue.x, barBlue.y, false);
+		barBlue.filling = new Filling(barBlue.x, barBlue.y, "blue");
 		barBlue.filling.image = game.assets['images/gui_barBlue.png'];
 		barBlue.button = new ButtonIcon(barBlue.x, barBlue.y, CONT_INPUT.lstick);
 		barBlue.button.passiveImage = game.assets['images/gui_buttonL.png'];
 		barBlue.button.activeImage = game.assets['images/gui_buttonLH.png'];
 		
 		barGray = new Bar(335, gameHeight - 100);
-		barGray.filling = new Filling(barGray.x, barGray.y, false);
+		barGray.filling = new Filling(barGray.x, barGray.y, "gray");
 		barGray.filling.image = game.assets['images/gui_barGray.png'];
 		barGray.button = new ButtonIcon(barGray.x, barGray.y, CONT_INPUT.rstick);
 		barGray.button.passiveImage = game.assets['images/gui_buttonR.png'];
@@ -849,10 +886,21 @@ window.onload = function() {
 				}
 				if (controllers[k] !== undefined) {
 					if (controllers[k].buttons[CONT_INPUT.lstick] === 1) {
-						ships[k].speed = 6;
+						brakesPressed = true;
 					}
 					else {
-						ships[k].speed = 3;
+						if (brakesPressed) {
+							brakesToggle = !brakesToggle;
+							brakesPressed = false;
+						}
+					}
+					if (brakesToggle) {
+						ships[k].speed = 2.5;						
+						barBlue.filling.addValue(-0.9);
+					}
+					else {
+						ships[k].speed = 6;
+						barBlue.filling.addValue(0.5);
 					}
 					if (controllers[k].axes[CONT_INPUT.lstick_x] > 0.5 || controllers[k].axes[CONT_INPUT.lstick_x] < -0.5) {
 						ships[k].x += controllers[k].axes[CONT_INPUT.lstick_x] * ships[k].speed;
@@ -862,7 +910,7 @@ window.onload = function() {
 						ships[k].y += controllers[k].axes[CONT_INPUT.lstick_y] * ships[k].speed;
 						ships[k].updateComponents();
 					}
-					if (controllers[k].buttons[CONT_INPUT.b] === 1 && ships[k].bulletTimer >= 10 && barRed.filling.power >= 20) {
+					if (controllers[k].buttons[CONT_INPUT.b] === 1 && ships[k].bulletTimer >= 10) {
 						if (ships[k].checkComponent(GunImage)) {
 							if (barRed.filling.power === 100) {
 								game.rootScene.addChild(new PlayerBullet(ships[k].x + ships[k].width/2, ships[k].y, -Math.PI / 2, k));
@@ -889,13 +937,7 @@ window.onload = function() {
 							}
 						}
 						else {
-							barGreen.filling.addValue(-2);
-						}
-						if (barGreen.filling.power === 0) {
-							if (ships[k].shield !== null) {
-								game.rootScene.removeChild(ships[k].shield);
-								ships[k].shield = null;
-							}
+							barGreen.filling.addValue(-3);
 						}
 					}
 					else if (controllers[k].buttons[CONT_INPUT.a] === 0) {
@@ -903,7 +945,7 @@ window.onload = function() {
 							game.rootScene.removeChild(ships[k].shield);
 							ships[k].shield = null;
 						}
-						barGreen.filling.addValue(1);
+						barGreen.filling.addValue(0.5);
 					}
 					if (controllers[k].buttons[CONT_INPUT.rstick] === 1) {
 						if (ships[k].checkComponent(MissileImage)) {
@@ -913,6 +955,12 @@ window.onload = function() {
 								game.rootScene.addChild(new PlayerMissile(0, y, k));
 							}
 						}
+					}
+					if (ships[k].missileExists) {
+						barGray.filling.addValue(-100/120);
+					}
+					else {
+						barGray.filling.addValue(100/90);
 					}
 					if (controllers[k].buttons[CONT_INPUT.y] === 1) {
 						if (ships[k].checkComponent(GeneratorImage)) {
