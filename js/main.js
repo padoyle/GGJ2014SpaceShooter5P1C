@@ -32,6 +32,12 @@ var scalingDifficultyNumber = 1;
 var energy = 0;
 var stress = 0;
 
+var barRed;
+var barBlue;
+var barGreen;
+var barYellow;
+var barGray;
+
 var BG = Class.create(Sprite, {
 	initialize: function() {
 		Sprite.call(this, gameWidth, gameHeight * 2);
@@ -51,6 +57,32 @@ var HealthBar = Class.create(Sprite, {
 		this.opacity = .8;
 	}
 });
+var Ticker = Class.create(Sprite, {
+	initialize: function(x, y) {
+		Sprite.call(this, 6, 15);
+		this.x = x;
+		this.y = y + 3;
+		this.speed = 4;
+		this.missTimer = 0;
+		this.colorTimer = 0;
+		this.neutImage = game.assets['images/gui_barTick.png'];
+		this.goodImage = game.assets['images/gui_barTick1.png'];
+		this.badImage = game.assets['images/gui_barTick2.png'];
+		this.image = this.neutImage;
+	},
+	onenterframe: function() {
+		if (this.missTimer > 0) {
+			this.missTimer--;
+		}
+		if (this.colorTimer > 0) {
+			this.colorTimer--;
+		}
+		if (this.colorTimer === 0) {
+			this.image = this.neutImage;
+		}
+		//CHANGE SPEED BASED ON TOTAL ENERGY
+	}
+});
 var Filling = Class.create(Sprite, {
 	initialize: function(x, y, isYellow) {
 		if (isYellow) {
@@ -62,14 +94,60 @@ var Filling = Class.create(Sprite, {
 		this.isYellow = isYellow;
 		this.x = x + 3;
 		this.y = y + 3;
+		this.speed = 1;
+		this.released = true;
+		this.minX = x;
+		this.maxX = x + 112; // These are used for yellow bar
+		this.ticker = new Ticker(x, y);
 		this.power = 100;
+	},
+	addValue: function(amount) {
+		this.power += amount;
+		if (this.power > 100) {
+			this.power = 100;
+		}
+		if (this.power < 0) {
+			this.power = 0;
+		}
 	},
 	onenterframe: function() {
 		if (this.isYellow) {
-			this.width = this.power / 100 * 15;
+			this.x += this.speed;
+			this.ticker.x += this.ticker.speed;
+			if (this.ticker.x <= this.minX || this.ticker.x >= this.maxX) {
+				this.ticker.speed *= -1;
+			}
+			if (this.x <= this.minX || this.x >= this.maxX) {
+				this.speed *= -1;
+			}
 		}
 		else {
 			this.width = this.power / 100 * 118;
+		}
+	},
+	checkticker: function() {
+		if (this.isYellow && this.ticker.missTimer === 0 && this.released === true) {
+			if (this.ticker.intersect(this)) {
+				this.ticker.image = this.ticker.goodImage;
+				this.ticker.colorTimer = 30;
+				//ADD ENERGYYYYY
+			}
+			else if (Math.abs(this.ticker.x - this.x) < 20) {
+				this.ticker.image = this.ticker.goodImage;
+				this.ticker.colorTimer = 30;
+				//ADD ENERGYYYYY
+			}
+			else {
+				this.ticker.colorTimer = 60;
+				this.ticker.missTimer = 60;
+				this.ticker.image = this.ticker.badImage;
+			}
+			this.released = false;
+		}
+	},
+	releaseticker: function() {
+		if (this.isYellow) {
+			this.released = true;
 		}
 	}
 });
@@ -125,6 +203,7 @@ var Bar = Class.create(Sprite, {
 		this.y = y;
 		this.image = game.assets['images/gui_barFrame.png'];
 		this.filling;
+		this.filling2;
 		this.button;
 	}
 });
@@ -256,13 +335,6 @@ Ship = Class.create(Sprite, {
 		}
 		return false;
 	},
-	// drainComponent: function(clazz, _amount) {
-	// 	for (var t = 0; t < this.component.length; t++) {
-	// 		if (this.components[t] instanceof clazz) {
-	// 			this.components[t].drainEnergy(_amount);
-	// 		}
-	// 	}
-	// },
 	drawComponents: function() {
 		for (var w = 0; w < this.components.length; w++) {
 			if (this.components[w]) {
@@ -462,14 +534,15 @@ var EnemyBullet = Class.create(Bullet, {
 });
 
 var PlayerBullet = Class.create(Bullet, {
-	initialize: function(_x, _y, shipNum) {
+	initialize: function(_x, _y, angle, shipNum) {
 		Bullet.call(this, 16, 28);
 		this.image = getAssets()['images/player_bullet.png'];
 		this.damage = 1;
+		this.angle = angle;
 		this.x = _x - this.width/2;
 		this.y = _y - this.height;
-		this.velX = 0;
-		this.velY = -10;
+		this.velX = 10 * Math.cos(this.angle);
+		this.velY = 10 * Math.sin(this.angle);
 	}
 });
 
@@ -641,7 +714,8 @@ window.onload = function() {
 		'images/gui_buttonY.png', 'images/gui_buttonB.png', 'images/gui_buttonRH.png',
 		'images/gui_buttonAH.png', 'images/gui_buttonBH.png', 'images/gui_buttonYH.png',
 		'images/gui_buttonLH.png', 'images/gui_barHealth.png', 'images/gui_buttonHit0.png',
-		'images/gui_buttonHit1.png');
+		'images/gui_buttonHit1.png', 'images/gui_barTick.png', 'images/gui_barTick1.png',
+		'images/gui_barTick2.png');
 	
 	game.fps = 60;
 	game.scale = 1;
@@ -668,6 +742,8 @@ window.onload = function() {
 		barYellow = new Bar(245, gameHeight - 50);
 		barYellow.filling = new Filling(barYellow.x, barYellow.y, true);
 		barYellow.filling.image = game.assets['images/gui_barYellow0.png'];
+		barYellow.filling2 = new Filling(barYellow.x, barYellow.y, false);
+		barYellow.filling2.image = game.assets['images/gui_barGray.png'];
 		
 		barYellow.button = new ButtonIcon(barYellow.x, barYellow.y, CONT_INPUT.y);
 		barYellow.button.passiveImage = game.assets['images/gui_buttonY.png'];
@@ -700,8 +776,10 @@ window.onload = function() {
 		game.rootScene.addChild(barRed.filling);
 		game.rootScene.addChild(barRed.button);
 		game.rootScene.addChild(barYellow);
+		game.rootScene.addChild(barYellow.filling2);
 		game.rootScene.addChild(barYellow.filling);
 		game.rootScene.addChild(barYellow.button);
+		game.rootScene.addChild(barYellow.filling.ticker);
 		game.rootScene.addChild(barGreen);
 		game.rootScene.addChild(barGreen.filling);
 		game.rootScene.addChild(barGreen.button);
@@ -784,21 +862,48 @@ window.onload = function() {
 						ships[k].y += controllers[k].axes[CONT_INPUT.lstick_y] * ships[k].speed;
 						ships[k].updateComponents();
 					}
-					if (controllers[k].buttons[CONT_INPUT.b] === 1 && ships[k].bulletTimer >= 10) {
+					if (controllers[k].buttons[CONT_INPUT.b] === 1 && ships[k].bulletTimer >= 10 && barRed.filling.power >= 20) {
 						if (ships[k].checkComponent(GunImage)) {
-							game.rootScene.addChild(new PlayerBullet(ships[k].x + ships[k].width/2, ships[k].y, k));
-							ships[k].bulletTimer = 0;
+							if (barRed.filling.power === 100) {
+								game.rootScene.addChild(new PlayerBullet(ships[k].x + ships[k].width/2, ships[k].y, -Math.PI / 2, k));
+								game.rootScene.addChild(new PlayerBullet(ships[k].x + ships[k].width/2, ships[k].y, -Math.PI * 3 / 8, k));
+								game.rootScene.addChild(new PlayerBullet(ships[k].x + ships[k].width/2, ships[k].y, -Math.PI / 4, k));
+								game.rootScene.addChild(new PlayerBullet(ships[k].x + ships[k].width/2, ships[k].y, -Math.PI * 5 / 8, k));
+								game.rootScene.addChild(new PlayerBullet(ships[k].x + ships[k].width/2, ships[k].y, -Math.PI * 3 / 4, k));
+								ships[k].bulletTimer = 0;
+								barRed.filling.addValue(-25);
+							}
+							else {
+								game.rootScene.addChild(new PlayerBullet(ships[k].x + ships[k].width/2, ships[k].y, -Math.PI / 2, k));
+								ships[k].bulletTimer = 0;
+								barRed.filling.addValue(-10);
+							}
 						}
 					}
-					if (controllers[k].buttons[CONT_INPUT.a] === 1 && ships[k].shield === null) {
-						if (ships[k].checkComponent(ShieldImage)) {
-							ships[k].shield = new Shield(k);
-							game.rootScene.addChild(ships[k].shield);
+					barRed.filling.addValue(.5);
+					if (controllers[k].buttons[CONT_INPUT.a] === 1) {
+						if (ships[k].shield === null) {
+							if (ships[k].checkComponent(ShieldImage)) {
+								ships[k].shield = new Shield(k);
+								game.rootScene.addChild(ships[k].shield);
+							}
+						}
+						else {
+							barGreen.filling.addValue(-2);
+						}
+						if (barGreen.filling.power === 0) {
+							if (ships[k].shield !== null) {
+								game.rootScene.removeChild(ships[k].shield);
+								ships[k].shield = null;
+							}
 						}
 					}
-					else if (controllers[k].buttons[CONT_INPUT.a] === 0 && ships[k].shield !== null) {
-						game.rootScene.removeChild(ships[k].shield);
-						ships[k].shield = null;
+					else if (controllers[k].buttons[CONT_INPUT.a] === 0) {
+						if (ships[k].shield !== null) {
+							game.rootScene.removeChild(ships[k].shield);
+							ships[k].shield = null;
+						}
+						barGreen.filling.addValue(1);
 					}
 					if (controllers[k].buttons[CONT_INPUT.rstick] === 1) {
 						if (ships[k].checkComponent(MissileImage)) {
@@ -807,6 +912,16 @@ window.onload = function() {
 								var y = controllers[k].axes[CONT_INPUT.rstick_y] < -0.5 ? 5 : -5;
 								game.rootScene.addChild(new PlayerMissile(0, y, k));
 							}
+						}
+					}
+					if (controllers[k].buttons[CONT_INPUT.y] === 1) {
+						if (ships[k].checkComponent(GeneratorImage)) {
+							barYellow.filling.checkticker();
+						}
+					}
+					else if (controllers[k].buttons[CONT_INPUT.y] === 0 && barYellow.filling.released === false){
+						if (ships[k].checkComponent(GeneratorImage)) {
+							barYellow.filling.releaseticker();
 						}
 					}
 				}
