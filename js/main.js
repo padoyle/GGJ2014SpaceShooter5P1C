@@ -38,6 +38,9 @@ var barGreen;
 var barYellow;
 var barGray;
 
+var brakesToggle = false;
+var brakesPressed = false;
+
 var BG = Class.create(Sprite, {
 	initialize: function() {
 		Sprite.call(this, gameWidth, gameHeight * 2);
@@ -865,10 +868,21 @@ window.onload = function() {
 				}
 				if (controllers[k] !== undefined) {
 					if (controllers[k].buttons[CONT_INPUT.lstick] === 1) {
-						ships[k].speed = 6;
+						brakesPressed = true;
 					}
 					else {
-						ships[k].speed = 3;
+						if (brakesPressed) {
+							brakesToggle = !brakesToggle;
+							brakesPressed = false;
+						}
+					}
+					if (brakesToggle) {
+						ships[k].speed = 2.5;						
+						barBlue.filling.addValue(-0.9);
+					}
+					else {
+						ships[k].speed = 6;
+						barBlue.filling.addValue(0.5);
 					}
 					if (controllers[k].axes[CONT_INPUT.lstick_x] > 0.5 || controllers[k].axes[CONT_INPUT.lstick_x] < -0.5) {
 						ships[k].x += controllers[k].axes[CONT_INPUT.lstick_x] * ships[k].speed;
@@ -905,7 +919,7 @@ window.onload = function() {
 							}
 						}
 						else {
-							barGreen.filling.addValue(-2);
+							barGreen.filling.addValue(-3);
 						}
 						if (barGreen.filling.power === 0) {
 							if (ships[k].shield !== null) {
@@ -919,7 +933,7 @@ window.onload = function() {
 							game.rootScene.removeChild(ships[k].shield);
 							ships[k].shield = null;
 						}
-						barGreen.filling.addValue(1);
+						barGreen.filling.addValue(0.5);
 					}
 					if (controllers[k].buttons[CONT_INPUT.rstick] === 1) {
 						if (ships[k].checkComponent(MissileImage)) {
