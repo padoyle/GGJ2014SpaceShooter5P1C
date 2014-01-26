@@ -32,6 +32,12 @@ var scalingDifficultyNumber = 1;
 var energy = 0;
 var stress = 0;
 
+var barRed;
+var barBlue;
+var barGreen;
+var barYellow;
+var barGray;
+
 var BG = Class.create(Sprite, {
 	initialize: function() {
 		Sprite.call(this, gameWidth, gameHeight * 2);
@@ -63,6 +69,15 @@ var Filling = Class.create(Sprite, {
 		this.x = x + 3;
 		this.y = y + 3;
 		this.power = 100;
+	},
+	addValue: function(amount) {
+		this.power += amount;
+		if (this.power > 100) {
+			this.power = 100;
+		}
+		if (this.power < 0) {
+			this.power = 0;
+		}
 	},
 	onenterframe: function() {
 		if (this.isYellow) {
@@ -256,13 +271,6 @@ Ship = Class.create(Sprite, {
 		}
 		return false;
 	},
-	// drainComponent: function(clazz, _amount) {
-	// 	for (var t = 0; t < this.component.length; t++) {
-	// 		if (this.components[t] instanceof clazz) {
-	// 			this.components[t].drainEnergy(_amount);
-	// 		}
-	// 	}
-	// },
 	drawComponents: function() {
 		for (var w = 0; w < this.components.length; w++) {
 			if (this.components[w]) {
@@ -790,15 +798,29 @@ window.onload = function() {
 							ships[k].bulletTimer = 0;
 						}
 					}
-					if (controllers[k].buttons[CONT_INPUT.a] === 1 && ships[k].shield === null) {
-						if (ships[k].checkComponent(ShieldImage)) {
-							ships[k].shield = new Shield(k);
-							game.rootScene.addChild(ships[k].shield);
+					if (controllers[k].buttons[CONT_INPUT.a] === 1) {
+						if (ships[k].shield === null) {
+							if (ships[k].checkComponent(ShieldImage)) {
+								ships[k].shield = new Shield(k);
+								game.rootScene.addChild(ships[k].shield);
+							}
+						}
+						else {
+							barGreen.filling.addValue(-2);
+						}
+						if (barGreen.filling.power === 0) {
+							if (ships[k].shield !== null) {
+								game.rootScene.removeChild(ships[k].shield);
+								ships[k].shield = null;
+							}
 						}
 					}
-					else if (controllers[k].buttons[CONT_INPUT.a] === 0 && ships[k].shield !== null) {
-						game.rootScene.removeChild(ships[k].shield);
-						ships[k].shield = null;
+					else if (controllers[k].buttons[CONT_INPUT.a] === 0) {
+						if (ships[k].shield !== null) {
+							game.rootScene.removeChild(ships[k].shield);
+							ships[k].shield = null;
+						}
+						barGreen.filling.addValue(1);
 					}
 					if (controllers[k].buttons[CONT_INPUT.rstick] === 1) {
 						if (ships[k].checkComponent(MissileImage)) {
