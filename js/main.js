@@ -553,7 +553,9 @@ var Enemy10 = Class.create(Enemy, {
 });
 
 var pickFormation = function () {
-    functions[0]();
+    var random = Math.random() * (functions.length - 1);
+    random = Math.floor(random);
+    functions[random]();
 }
 
 var Bullet = Class.create(Sprite, {
