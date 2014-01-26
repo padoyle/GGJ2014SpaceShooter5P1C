@@ -194,6 +194,25 @@ Ship = Class.create(Sprite, {
 		for (var g = 0; g < this.components.length; g++) {
 			game.rootScene.removeChild(this.components[g]);
 		}
+		this.components = [];
+	},
+	removeComponent: function(clazz) {
+		for (var r = 0; r < this.components.length; r++) {
+			if (this.components[r] instanceof clazz) {
+				game.rootScene.removeChild(this.components[r]);
+				this.components.splice(r, 1);
+				return true;
+			}
+		}
+		return false;
+	},
+	checkComponent: function(clazz) {
+		for (var t = 0; t < this.components.length; t++) {
+			if (this.components[t] instanceof clazz) {
+				return true;
+			}
+		}
+		return false;
 	}
 });
 
@@ -439,11 +458,44 @@ var PulseScene = Class.create(Scene, {
 		Scene.apply(this);
 		this.pulse = new Pulse();
 		this.addChild(this.pulse);
+		this.timer = 0;
+		this.somethingDied = [false, false, false, false];
 	},
 	onenterframe: function() {
+		this.timer++;
 		if (this.pulse.y > gameHeight) {
+			for (var v = 0; v < this.somethingDied.length; v++) {
+				if (!this.somethingDied[v] && getShips()[v]) {
+					getShips()[v].health = 0;
+				}
+			}
+			if (!this.somethingDied) {
+				
+			}
 			aud.resumepause();
 			game.popScene();
+		}
+		if (this.timer > 30) {
+			updateControllers();
+			for (var k = 0; controllers[k] !== undefined; k++) {
+				if (ships[k] === null) {
+					continue;
+				}
+				if (controllers[k] !== undefined) {
+					if (controllers[k].buttons[CONT_INPUT.rstick] === 1) {
+						this.somethingDied[k] |= getShips()[k].removeComponent(MissileImage);
+					}
+					if (controllers[k].buttons[CONT_INPUT.a] === 1) {
+						this.somethingDied[k] |= getShips()[k].removeComponent(ShieldImage);
+					}
+					if (controllers[k].buttons[CONT_INPUT.b] === 1) {
+						this.somethingDied[k] |= getShips()[k].removeComponent(GunImage);
+					}
+					if (controllers[k].buttons[CONT_INPUT.y] === 1) {
+						this.somethingDied[k] |= getShips()[k].removeComponent(GeneratorImage);
+					}
+				}
+			}
 		}
 	}
 });
@@ -590,22 +642,28 @@ window.onload = function() {
 						ships[k].updateComponents();
 					}
 					if (controllers[k].buttons[CONT_INPUT.b] === 1 && ships[k].bulletTimer >= 10) {
-						game.rootScene.addChild(new PlayerBullet(ships[k].x + ships[k].width/2, ships[k].y, k));
-						ships[k].bulletTimer = 0;
+						if (ships[k].checkComponent(GunImage)) {
+							game.rootScene.addChild(new PlayerBullet(ships[k].x + ships[k].width/2, ships[k].y, k));
+							ships[k].bulletTimer = 0;
+						}
 					}
 					if (controllers[k].buttons[CONT_INPUT.a] === 1 && ships[k].shield === null) {
-						ships[k].shield = new Shield(k);
-						game.rootScene.addChild(ships[k].shield);
+						if (ships[k].checkComponent(ShieldImage)) {
+							ships[k].shield = new Shield(k);
+							game.rootScene.addChild(ships[k].shield);
+						}
 					}
 					else if (controllers[k].buttons[CONT_INPUT.a] === 0 && ships[k].shield !== null) {
 						game.rootScene.removeChild(ships[k].shield);
 						ships[k].shield = null;
 					}
 					if (controllers[k].buttons[CONT_INPUT.rstick] === 1) {
-						if (ships[k].missileExists === false) {
-							ships[k].missileExists = true;
-							var y = controllers[k].axes[CONT_INPUT.rstick_y] < -0.5 ? 5 : -5;
-							game.rootScene.addChild(new PlayerMissile(0, y, k));
+						if (ships[k].checkComponent(MissileImage)) {
+							if (ships[k].missileExists === false) {
+								ships[k].missileExists = true;
+								var y = controllers[k].axes[CONT_INPUT.rstick_y] < -0.5 ? 5 : -5;
+								game.rootScene.addChild(new PlayerMissile(0, y, k));
+							}
 						}
 					}
 				}
