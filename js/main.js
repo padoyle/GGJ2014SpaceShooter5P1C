@@ -57,6 +57,32 @@ var HealthBar = Class.create(Sprite, {
 		this.opacity = .8;
 	}
 });
+var Ticker = Class.create(Sprite, {
+	initialize: function(x, y) {
+		Sprite.call(this, 6, 15);
+		this.x = x;
+		this.y = y + 3;
+		this.speed = 4;
+		this.missTimer = 0;
+		this.colorTimer = 0;
+		this.neutImage = game.assets['images/gui_barTick.png'];
+		this.goodImage = game.assets['images/gui_barTick1.png'];
+		this.badImage = game.assets['images/gui_barTick2.png'];
+		this.image = this.neutImage;
+	},
+	onenterframe: function() {
+		if (this.missTimer > 0) {
+			this.missTimer--;
+		}
+		if (this.colorTimer > 0) {
+			this.colorTimer--;
+		}
+		if (this.colorTimer === 0) {
+			this.image = this.neutImage;
+		}
+		//CHANGE SPEED BASED ON TOTAL ENERGY
+	}
+});
 var Filling = Class.create(Sprite, {
 	initialize: function(x, y, isYellow) {
 		if (isYellow) {
@@ -68,6 +94,11 @@ var Filling = Class.create(Sprite, {
 		this.isYellow = isYellow;
 		this.x = x + 3;
 		this.y = y + 3;
+		this.speed = 1;
+		this.released = true;
+		this.minX = x;
+		this.maxX = x + 112; // These are used for yellow bar
+		this.ticker = new Ticker(x, y);
 		this.power = 100;
 	},
 	addValue: function(amount) {
@@ -81,10 +112,42 @@ var Filling = Class.create(Sprite, {
 	},
 	onenterframe: function() {
 		if (this.isYellow) {
-			this.width = this.power / 100 * 15;
+			this.x += this.speed;
+			this.ticker.x += this.ticker.speed;
+			if (this.ticker.x <= this.minX || this.ticker.x >= this.maxX) {
+				this.ticker.speed *= -1;
+			}
+			if (this.x <= this.minX || this.x >= this.maxX) {
+				this.speed *= -1;
+			}
 		}
 		else {
 			this.width = this.power / 100 * 118;
+		}
+	},
+	checkticker: function() {
+		if (this.isYellow && this.ticker.missTimer === 0 && this.released === true) {
+			if (this.ticker.intersect(this)) {
+				this.ticker.image = this.ticker.goodImage;
+				this.ticker.colorTimer = 30;
+				//ADD ENERGYYYYY
+			}
+			else if (Math.abs(this.ticker.x - this.x) < 20) {
+				this.ticker.image = this.ticker.goodImage;
+				this.ticker.colorTimer = 30;
+				//ADD ENERGYYYYY
+			}
+			else {
+				this.ticker.colorTimer = 60;
+				this.ticker.missTimer = 60;
+				this.ticker.image = this.ticker.badImage;
+			}
+			this.released = false;
+		}
+	},
+	releaseticker: function() {
+		if (this.isYellow) {
+			this.released = true;
 		}
 	}
 });
@@ -140,6 +203,7 @@ var Bar = Class.create(Sprite, {
 		this.y = y;
 		this.image = game.assets['images/gui_barFrame.png'];
 		this.filling;
+		this.filling2;
 		this.button;
 	}
 });
@@ -649,7 +713,8 @@ window.onload = function() {
 		'images/gui_buttonY.png', 'images/gui_buttonB.png', 'images/gui_buttonRH.png',
 		'images/gui_buttonAH.png', 'images/gui_buttonBH.png', 'images/gui_buttonYH.png',
 		'images/gui_buttonLH.png', 'images/gui_barHealth.png', 'images/gui_buttonHit0.png',
-		'images/gui_buttonHit1.png');
+		'images/gui_buttonHit1.png', 'images/gui_barTick.png', 'images/gui_barTick1.png',
+		'images/gui_barTick2.png');
 	
 	game.fps = 60;
 	game.scale = 1;
@@ -676,6 +741,8 @@ window.onload = function() {
 		barYellow = new Bar(245, gameHeight - 50);
 		barYellow.filling = new Filling(barYellow.x, barYellow.y, true);
 		barYellow.filling.image = game.assets['images/gui_barYellow0.png'];
+		barYellow.filling2 = new Filling(barYellow.x, barYellow.y, false);
+		barYellow.filling2.image = game.assets['images/gui_barGray.png'];
 		
 		barYellow.button = new ButtonIcon(barYellow.x, barYellow.y, CONT_INPUT.y);
 		barYellow.button.passiveImage = game.assets['images/gui_buttonY.png'];
@@ -708,8 +775,10 @@ window.onload = function() {
 		game.rootScene.addChild(barRed.filling);
 		game.rootScene.addChild(barRed.button);
 		game.rootScene.addChild(barYellow);
+		game.rootScene.addChild(barYellow.filling2);
 		game.rootScene.addChild(barYellow.filling);
 		game.rootScene.addChild(barYellow.button);
+		game.rootScene.addChild(barYellow.filling.ticker);
 		game.rootScene.addChild(barGreen);
 		game.rootScene.addChild(barGreen.filling);
 		game.rootScene.addChild(barGreen.button);
@@ -829,6 +898,16 @@ window.onload = function() {
 								var y = controllers[k].axes[CONT_INPUT.rstick_y] < -0.5 ? 5 : -5;
 								game.rootScene.addChild(new PlayerMissile(0, y, k));
 							}
+						}
+					}
+					if (controllers[k].buttons[CONT_INPUT.y] === 1) {
+						if (ships[k].checkComponent(GeneratorImage)) {
+							barYellow.filling.checkticker();
+						}
+					}
+					else if (controllers[k].buttons[CONT_INPUT.y] === 0 && barYellow.filling.released === false){
+						if (ships[k].checkComponent(GeneratorImage)) {
+							barYellow.filling.releaseticker();
 						}
 					}
 				}
