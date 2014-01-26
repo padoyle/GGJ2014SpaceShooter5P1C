@@ -300,7 +300,8 @@ var Ship = Class.create(Sprite, {
 		this.healthBar.image = game.assets['images/gui_barHealth.png'];
 		this.bulletTimer = 30;
 		this.shield = null;
-		this.missileExists = false;
+		this.missile = null;
+		this.explosionPrimed = false;
 		this.components = [];
 		var shieldImage = new ShieldImage(this.x, this.y, this.number);
 		this.components.push(shieldImage);
@@ -377,6 +378,14 @@ var Ship = Class.create(Sprite, {
 			}
 		}
 		game.rootScene.addChild(this.healthBar);
+	},
+	explodeMissile: function() {
+		if (this.missile !== null) {
+			this.missile.explode();
+			this.explosionPrimed = false;
+			this.missilePrimed = false;
+			this.missile = null;
+		}
 	}
 });
 
@@ -640,9 +649,9 @@ var PlayerBullet = Class.create(Bullet, {
 });
 var MissileExplosion = Class.create(Sprite, {
 	initialize: function(x, y) {
-		Sprite.call(this, 48, 46);
-		this.x = x - 12;
-		this.y = y - 1;
+		Sprite.call(this, 68, 66);
+		this.x = x - 24;
+		this.y = y - 11;
 		this.opacity = 1;
 		this.damage = 20;
 		this.image = game.assets['images/explosion0.png'];
@@ -680,29 +689,26 @@ var PlayerMissile = Class.create(Bullet, {
 		var ship = getShip();
 		this.timer++;
 		if (ship.shield !== null && ship.shield.intersect(this) && this.timer > 45) {
-			game.rootScene.addChild(new MissileExplosion(this.x, this.y));
-			game.rootScene.removeChild(this);
+			ship.explodeMissile();
+			return;
 		}
 		else if (ship.intersect(this) && this.timer > 45) {
-			ship.missileExists = false;
-			game.rootScene.addChild(new MissileExplosion(this.x, this.y));
-			ship.updateComponents();
-			game.rootScene.removeChild(this);
+			ship.explodeMissile();
+			return;
 		}
 		
 		for (var j = 0; j < enemies.length; j++) {
 			if (enemies[j].intersect(this) && enemies[j].onScreen) {
-				ship.missileExists = false;
-				game.rootScene.addChild(new MissileExplosion(this.x, this.y));
-				game.rootScene.removeChild(this);
+				ship.explodeMissile();
+				return;
 			}
 		}
 		this.x += this.velX;
 		this.y += this.velY;
 		if (this.y > gameHeight || this.y < -this.height
 		 || this.x > gameWidth || this.x < -this.width) {
-			ship.missileExists = false;
-			game.rootScene.removeChild(this);
+			ship.explodeMissile();
+			return;
 		}
 		else {
 			if (controller.axes[CONT_INPUT.rstick_x] > 0.5 
@@ -719,6 +725,10 @@ var PlayerMissile = Class.create(Bullet, {
 				this.velY = Math.sin(this.angle) * 5;
 			}
 		}
+	},
+	explode: function() {
+		game.rootScene.addChild(new MissileExplosion(this.x, this.y));
+		game.rootScene.removeChild(this);
 	}
 });
 
@@ -1012,14 +1022,23 @@ window.onload = function() {
 				}
 				if (controller.buttons[CONT_INPUT.rstick] === 1) {
 					if (ship.checkComponent(MissileImage)) {
-						if (ship.missileExists === false) {
-							ship.missileExists = true;
+						if (ship.missile === null && ship.missilePrimed) {
 							var y = controller.axes[CONT_INPUT.rstick_y] < -0.5 ? 5 : -5;
-							game.rootScene.addChild(new PlayerMissile(0, y));
+							ship.missile = new PlayerMissile(0, y);
+							game.rootScene.addChild(ship.missile);
+						}
+						else if (ship.explosionPrimed) {
+							ship.explodeMissile();
 						}
 					}
 				}
-				if (ship.missileExists) {
+				else if (controller.buttons[CONT_INPUT.rstick] === 0) {
+					if (ship.missile !== null) {
+						ship.explosionPrimed = true;
+					}
+					ship.missilePrimed = true;
+				}
+				if (ship.missile !== null) {
 					barGray.filling.addValue(-100/120);
 				}
 				else {
