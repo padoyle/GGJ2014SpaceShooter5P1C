@@ -5,26 +5,27 @@
 <script>
 var controller = null;
 function printControllers()
-{
+{				
 		if (navigator.webkitGetGamepads) {
-			controller = navigator.webkitGetGamepads()[0];
+			controller = navigator.webkitGetGamepads();
 		}
 		if (!controller) {
 			return;
 		}
 		var j;
-		for (j = 0; j < controller.buttons.length; j++) {
-			if (controller.buttons[j] == 1) {
+		for (j = 0; j < controller[0].buttons.length; j++) {
+			if (controller[0].buttons[j] == 1) {
 				document.getElementById("data" + j).innerHTML = true;
 			}
 			else {
 				document.getElementById("data" + j).innerHTML = false;			
 			}
 		}
-		for (j = 0; j < controller.axes.length; j++) {
-			document.getElementById("axis" + j).innerHTML = controller.axes[j];
+		for (j = 0; j < controller[0].axes.length; j++) {
+			document.getElementById("axis" + j).innerHTML = controller[0].axes[j];
 		}
 		window.requestAnimationFrame(printControllers);
+		console.log(controller);
 }
 
 window.requestAnimationFrame(printControllers);
