@@ -638,13 +638,35 @@ var PlayerBullet = Class.create(Bullet, {
 		this.velY = 10 * Math.sin(this.angle);
 	}
 });
+var MissileExplosion = Class.create(Sprite, {
+	initialize: function(x, y) {
+		Sprite.call(this, 100, 100);
+		this.x = x - 15;
+		this.y = y - 3;
+		this.opacity = 1;
+		this.damage = 20;
+	},
+	onenterframe: function() {
+		if (this.opacity === 1) {
+			for (var c = 0; c < enemies.length; c++) {
+				if (enemies[c].intersect(this)) {
+					enemies[c].health -= this.damage;
+				}
+			}
+		}
+		this.opacity -= 1/60;
+		if (this.opacity === 0) {
+			game.rootScene.removeChild(this);
+		}
+	}
+});
 
 var PlayerMissile = Class.create(Bullet, {
 	initialize: function(velocityX, velocityY) {
 		Bullet.call(this, 20, 44);
 		this.image = getAssets()['images/player_missile.png'];
 		this.timer = 0;
-		this.damage = 5;
+		this.damage = 0;
 		this.angle = 0;
 		var ship = getShip();
 		this.x = ship.x + 15;
@@ -657,12 +679,12 @@ var PlayerMissile = Class.create(Bullet, {
 		var ship = getShip();
 		this.timer++;
 		if (ship.shield !== null && ship.shield.intersect(this) && this.timer > 45) {
-			ship.missileExists = false;
+			game.rootScene.addChild(new MissileExplosion(this.x, this.y));
 			game.rootScene.removeChild(this);
 		}
 		else if (ship.intersect(this) && this.timer > 45) {
 			ship.missileExists = false;
-			ship.health -= this.damage;
+			game.rootScene.addChild(new MissileExplosion(this.x, this.y));
 			ship.updateComponents();
 			game.rootScene.removeChild(this);
 		}
@@ -670,7 +692,7 @@ var PlayerMissile = Class.create(Bullet, {
 		for (var j = 0; j < enemies.length; j++) {
 			if (enemies[j].intersect(this) && enemies[j].onScreen) {
 				ship.missileExists = false;
-				enemies[j].health -= this.damage;
+				game.rootScene.addChild(new MissileExplosion(this.x, this.y));
 				game.rootScene.removeChild(this);
 			}
 		}
