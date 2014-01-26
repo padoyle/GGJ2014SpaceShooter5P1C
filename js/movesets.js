@@ -77,5 +77,52 @@ var enemy_movesets = {
 				new Move(0, 0, 20, 0, 0),
 				new Move(0, 0, 0, 7, 126),
 				new Move(0, 0, 20, 0, 0),
-				new Move(0.5 * Math.PI, 10, 120, 0, 0)))
+				new Move(0.5 * Math.PI, 10, 120, 0, 0))),
+    set5: new MoveSet(new Array(
+                new Move(0.25 * Math.PI, 10, 20, 0, 0),
+                new Move(0, 2, 120, 6, 90),
+                new Move(Math.PI, 2, 120, 6, 90),
+                new Move(0, 2, 120, 7, 90),
+                new Move(Math.PI, 2, 120, 6, 90),
+                new Move(0.5 * Math.PI, 10, 120, 0, 0))),
+    set6: new MoveSet(new Array(
+                new Move(0.5 * Math.PI, 10, 20, 0, 0),
+                new Move(0, 0, 0, 3, 60))),
+    set7: new MoveSet(new Array(
+                new Move(0.5 * Math.PI, 3, 60, 3, 90),
+                new Move(0.25 * Math.PI, 3, 60, 2, 90),
+                new Move(Math.PI, 3, 90, 5, 90))),
+    set8: new MoveSet(new Array(
+                new Move(0.5 * Math.PI, 2.5, 60, 0, 0),
+                new Move(0, 0, 0, 12, 360),
+                new Move(0, 0, 60, 0, 0),
+                new Move(0.75 * Math.PI, 2.5, 75, 0, 0),
+                new Move(0, 0, 0, 12, 360),
+                new Move(0, 0, 60, 0, 0),
+                new Move(0.25 * Math.PI, 2.5, 75, 0, 0),
+                new Move(0, 0, 0, 12, 360),
+                new Move(0, 0, 60, 0, 0),
+                new Move(1.75 * Math.PI, 2.5, 75, 0, 0),
+                new Move(0, 0, 0, 12, 360),
+                new Move(0, 0, 60, 0, 0),
+                new Move(1.25 * Math.PI, 2.5, 75, 0, 0),
+                new Move(0, 0, 0, 12, 360),
+                new Move(0, 0, 60, 0, 0))),
+    set9: new MoveSet(new Array(
+                new Move(0, 0, 0, 10, 30),
+                new Move(0, 2.5, 100, 0, 0),
+                new Move(0, 0, 0, 10, 30),
+                new Move(0.75 * Math.PI, 2.5, 50, 0, 0),
+                new Move(0, 0, 0, 10, 30),
+                new Move(0.75 * Math.PI, 2.5, 50, 0, 0))),
+    set10: new MoveSet(new Array(
+                new Move(0.5 * Math.PI, 1.5, 200, 4, 90))),
+    set11: new MoveSet(new Array(
+                new Move(0.3 * Math.PI, 1.5, 90, 2, 90),
+                new Move(0, 0, 0, 2, 90),
+                new Move(0.6 * Math.PI, 2.4, 36, 1, 90),
+                new Move(0, 0, 0, 2, 90),
+                new Move(0.6 * Math.PI, 2.4, 10, 0, 0),
+                new Move(1.5 * Math.PI, 1.5, 40, 3, 90),
+                new Move(0, 0, 0, 2, 90)))
 };

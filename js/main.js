@@ -31,6 +31,7 @@ var ships = []; // all ships
 var scalingDifficultyNumber = 1;
 var energy = 0;
 var stress = 0;
+var functions = [];
 
 var barRed;
 var barBlue;
@@ -445,8 +446,8 @@ var Enemy = Class.create(Sprite, {
                 var dir_start = 90 - this.move.angle / 2;
                 var dir_shift = this.move.angle / (this.move.bullets - 1);
                 console.log(dir_start, dir_shift);
-                for (var i = 0; i < this.move.bullets; i++) {
-                    var bullet = new EnemyBullet(bx, by, 2, dir_start + dir_shift * i);
+                for (i = 0; i < this.move.bullets; i++) {
+                    bullet = new EnemyBullet(bx, by, 2, dir_start + dir_shift * i);
                     game.rootScene.addChild(bullet);
                 }
             }
@@ -497,11 +498,63 @@ var Enemy3 = Class.create(Enemy, {
 
 var Enemy4 = Class.create(Enemy, {
 	initialize: function(_x, _y) {
-		Enemy.call(this, enemy_movesets.set4.clone(), _x, _y);
+		Enemy.call(this, enemy_movesets.set5.clone(), _x, _y);
 		this.image = getAssets()['images/enemy1.png'];
 		this.health = 6;
 	}
 });
+
+var Enemy5 = Class.create(Enemy, {
+    initialize: function (_x, _y) {
+        Enemy.call(this, enemy_movesets.set6.clone(), _x, _y);
+        this.image = getAssets()['images/enemy2.png'];
+        this.health = 6;
+    }
+});
+
+var Enemy6 = Class.create(Enemy, {
+    initialize: function (_x, _y) {
+        Enemy.call(this, enemy_movesets.set7.clone(), _x, _y);
+        this.image = getAssets()['images/enemy1.png'];
+        this.health = 6;
+    }
+});
+
+var Enemy7 = Class.create(Enemy, {
+    initialize: function (_x, _y) {
+        Enemy.call(this, enemy_movesets.set8.clone(), _x, _y);
+        this.image = getAssets()['images/enemy3_2.png'];
+        this.health = 8;
+    }
+});
+
+var Enemy8 = Class.create(Enemy, {
+    initialize: function (_x, _y) {
+        Enemy.call(this, enemy_movesets.set9.clone(), _x, _y);
+        this.image = getAssets()['images/enemy2.png'];
+        this.health = 6;
+    }
+});
+
+var Enemy9 = Class.create(Enemy, {
+    initialize: function (_x, _y) {
+        Enemy.call(this, enemy_movesets.set10.clone(), _x, _y);
+        this.image = getAssets()['images/enemy1.png'];
+        this.health = 6;
+    }
+});
+
+var Enemy10 = Class.create(Enemy, {
+    initialize: function (_x, _y) {
+        Enemy.call(this, enemy_movesets.set11.clone(), _x, _y);
+        this.image = getAssets()['images/enemy1.png'];
+        this.health = 6;
+    }
+});
+
+var pickFormation = function () {
+    functions[0]();
+}
 
 var Bullet = Class.create(Sprite, {
 	initialize: function(width, height) {
@@ -765,6 +818,8 @@ window.onload = function() {
 
 	game.onload = function() {
 		var label, bg, bar;
+
+        FunctionSetup();
 		label = new Label("TWENTY Players.  FOUR Controllers.");
 		label.color = 'white';
 		
@@ -862,18 +917,12 @@ window.onload = function() {
 				energy = (enemies.length > 20 ? 20 : enemies.length) / 20;
 				aud.adaptpattern(stress, energy);
 			}
-			// if (game.rootScene.age % 600 === 0 && game.rootScene.age > 1) {
-			// 	game.assets['sounds/Inception.mp3'].play();
-			// 	aud.resumepause();
-			// 	game.pushScene(new PulseScene());
-			// }
 			
 			updateControllers();
 
 			if (enemies.length == 0 || enemies[enemies.length - 1].onScreen) {
-			    LoadFormation0();
-			    LoadFormation1();
-			}
+                pickFormation();
+   			}
 			for (i = 0; i < enemies.length; i++) {
 			    if (enemies[i].y > gameHeight) {
 			        game.rootScene.removeChild(enemies[i]);
