@@ -31,6 +31,7 @@ var enemies = []; // all enemies
 var scalingDifficultyNumber = 1;
 var functions = [];
 var chooseComponent = false;
+var gameTimer = 0;
 
 var barRed;
 var barBlue;
@@ -747,15 +748,18 @@ var PlayerBullet = Class.create(Bullet, {
 });
 var MissileExplosion = Class.create(Sprite, {
 	initialize: function(x, y) {
-		Sprite.call(this, 68, 68);
-		this.x = x - 24;
-		this.y = y - 11;
+		Sprite.call(this, 125, 125);
+		this.frame = 15;
+		this.x = x - 50;
+		this.timer = 0;
+		this.y = y - 40;
 		this.opacity = 1;
 		this.damage = 6;
-		this.image = game.assets['images/explosion2.png'];
+		this.image = game.assets['images/exlposions.png'];
 	},
 	onenterframe: function() {
-		if (this.opacity === 1) {
+		this.timer++;
+		if (this.timer === 1) {
 			game.assets['sounds/explosion0.mp3'].play();
 			for (var c = 0; c < enemies.length; c++) {
 				if (enemies[c].intersect(this)) {
@@ -763,8 +767,10 @@ var MissileExplosion = Class.create(Sprite, {
 				}
 			}
 		}
-		this.opacity -= 1/60;
-		if (this.opacity <= 0) {
+		if (this.timer % 5 === 0) {
+			this.frame++;
+		}
+		if (this.timer > 23) {
 			game.rootScene.removeChild(this);
 		}
 	}
@@ -965,7 +971,8 @@ window.onload = function() {
 		'images/gui_barFrame_FlashRed.png', 'images/gui_barFrame_FlashGreen.png',
 		'sounds/generator.mp3', 'sounds/shield.mp3', 'sounds/missiles.mp3',
 		'sounds/offline.mp3', 'sounds/online.mp3', 'sounds/lazers.mp3',
-		'sounds/HELLISTHEBULLET.wav', 'images/start.png', 'images/gameOver.png');
+		'sounds/HELLISTHEBULLET.wav', 'images/exlposions.png', 'images/start.png',
+		'sounds/powerOn.mp3', 'images/gameOver.png');
 	
 	game.fps = 60;
 	game.scale = 1;
@@ -1100,9 +1107,21 @@ window.onload = function() {
 			}
 			
 			updatecontroller();
+			
+			gameTimer++;
 
 			if (enemies.length == 0 || enemies[enemies.length - 1].onScreen) {
                 pickFormation();
+				var rand = Math.random();
+				if (gameTimer > 100 && rand * 2 < getShip().components.length / 4) {
+					game.assets['sounds/Inception.mp3'].play();
+					bgm.pause();
+					game.pushScene(new PulseScene());
+				}
+				else if (gameTimer > 100 && rand * 2 >= getShip().components.length / 4 && getShip().components.length < 4) {
+					chooseComponent = true;
+					game.assets['sounds/powerOn.mp3'].play();
+				}
    			}
 			for (i = 0; i < enemies.length; i++) {
 			    if (enemies[i].y > gameHeight) {
@@ -1241,11 +1260,6 @@ window.onload = function() {
 						}
 					}
 				}
-				if (controller.buttons[CONT_INPUT.lt] === 1 && game.currentScene == game.rootScene) {
-					game.assets['sounds/Inception.mp3'].play();
-					bgm.pause();
-					game.pushScene(new PulseScene());
-				}
 				if (controller.axes[CONT_INPUT.lstick_x] > 0.5 || controller.axes[CONT_INPUT.lstick_x] < -0.5) {
 					ship.x += controller.axes[CONT_INPUT.lstick_x] * ship.speed;
 					ship.updateComponents();
@@ -1253,10 +1267,6 @@ window.onload = function() {
 				if (controller.axes[CONT_INPUT.lstick_y] > 0.5 || controller.axes[CONT_INPUT.lstick_y] < -0.5) {
 					ship.y += controller.axes[CONT_INPUT.lstick_y] * ship.speed;
 					ship.updateComponents();
-				}
-
-				if (controller.buttons[CONT_INPUT.rt] === 1 && !chooseComponent) {
-					chooseComponent = true;
 				}
 				if (chooseComponent) {
 					if (!ship.checkComponent(GeneratorImage) && controller.buttons[CONT_INPUT.y] === 1) {
