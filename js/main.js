@@ -127,7 +127,7 @@ var Filling = Class.create(Sprite, {
 	},
 	onenterframe: function() {
 		if (this.color === "yellow") {
-			if (getShip().checkComponent(GeneratorImage)) {
+			if (!getShip().checkComponent(GeneratorImage)) {
 				this.ticker.visible = false;
 				return;
 			}
@@ -160,6 +160,7 @@ var Filling = Class.create(Sprite, {
 		if (this.color === "yellow" && this.ticker.missTimer === 0 && this.released === true) {
 			if (this.ticker.intersect(this)) {
 				this.ticker.image = this.ticker.goodImage;
+				barYellow.flashGreen();
 				this.ticker.colorTimer = 30;
 				barRed.filling.addValue(30);
 				barGreen.filling.addValue(30);
@@ -169,6 +170,7 @@ var Filling = Class.create(Sprite, {
 			else if (Math.abs((this.ticker.x + this.ticker.width / 2)
 							 - (this.x + this.width / 2)) < 20) {
 				this.ticker.image = this.ticker.goodImage;
+				barYellow.flashGreen();
 				this.ticker.colorTimer = 30;
 				barRed.filling.addValue(5);
 				barGreen.filling.addValue(5);
@@ -176,6 +178,7 @@ var Filling = Class.create(Sprite, {
 				barBlue.filling.addValue(5);
 			}
 			else {
+				barYellow.flashRed();
 				this.ticker.colorTimer = 60;
 				this.ticker.missTimer = 60;
 				this.ticker.image = this.ticker.badImage;
@@ -239,10 +242,49 @@ var Bar = Class.create(Sprite, {
 		Sprite.call(this, 131, 29);
 		this.x = x;
 		this.y = y;
-		this.image = game.assets['images/gui_barFrame.png'];
 		this.filling;
 		this.filling2;
+		this.greenFlash = null;
+		this.redFlash = null;
+		this.noFlash = null;
+		this.neutral = game.assets['images/gui_barFrame.png'];
+		this.image = this.neutral;
+		this.good = true;
 		this.button;
+		this.timer = 0;
+	},
+	onenterframe: function() {
+		if (this.timer === 0) {
+			this.image = this.neutral;
+		}
+		else {
+			this.timer--;
+			if (this.timer % 10 === 0) {
+				if (this.good) {
+					this.image = this.greenFlash;
+				}
+				else {
+					this.image = this.redFlash;
+				}
+			}
+			else if (this.timer % 5 === 0) {
+				this.image = this.noFlash;
+			}
+		}
+	},
+	flashGreen: function() {
+		if (this.greenFlash !== null) {
+			this.timer = 30;
+			this.good = true;
+			this.image = this.greenFlash;
+		}
+	},
+	flashRed: function() {
+		if (this.redFlash !== null) {
+			this.timer = 60;
+			this.good = false;
+			this.image = this.redFlash;
+		}
 	}
 });
 
@@ -300,7 +342,8 @@ var Ship = Class.create(Sprite, {
 		this.healthBar.image = game.assets['images/gui_barHealth.png'];
 		this.bulletTimer = 30;
 		this.shield = null;
-		this.missileExists = false;
+		this.missile = null;
+		this.explosionPrimed = false;
 		this.components = [];
 		var shieldImage = new ShieldImage(this.x, this.y, this.number);
 		this.components.push(shieldImage);
@@ -344,7 +387,6 @@ var Ship = Class.create(Sprite, {
 		this.healthBar.x = this.x;
 		this.healthBar.y = this.y + 5 + this.height;
 		this.healthBar.width = (this.health / this.maxHealth) * 49;
-		console.log(this.healthBar.x  + " " + this.healthBar.y);
 	},
 	removeComponents: function() {
 		for (var g = 0; g < this.components.length; g++) {
@@ -378,6 +420,14 @@ var Ship = Class.create(Sprite, {
 			}
 		}
 		game.rootScene.addChild(this.healthBar);
+	},
+	explodeMissile: function() {
+		if (this.missile !== null) {
+			this.missile.explode();
+			this.explosionPrimed = false;
+			this.missilePrimed = false;
+			this.missile = null;
+		}
 	}
 });
 
@@ -433,7 +483,7 @@ var Enemy = Class.create(Sprite, {
 
             if (this.move.bullets > 0 && this.move_progress % (this.move.duration / this.move.bullets) === 0) {
                 var bullet = new EnemyBullet(this.x + this.width / 2, this.y + this.height / 2, 2, this.move.angle);
-                game.rootScene.addChild(bullet);
+                game.rootScene.insertBefore(bullet, this);
             }
 
             if (this.move.duration === 0) {
@@ -444,7 +494,7 @@ var Enemy = Class.create(Sprite, {
                 console.log(dir_start, dir_shift);
                 for (i = 0; i < this.move.bullets; i++) {
                     bullet = new EnemyBullet(bx, by, 2, dir_start + dir_shift * i);
-                    game.rootScene.addChild(bullet);
+ 	               game.rootScene.insertBefore(bullet, this);
                 }
             }
 
@@ -479,7 +529,7 @@ var Enemy1 = Class.create(Enemy, {
 var Enemy2 = Class.create(Enemy, {
 	initialize: function(_x, _y) {
 		Enemy.call(this, enemy_movesets.set2.clone(), _x, _y);
-		this.image = getAssets()['images/enemy2.png'];
+		this.image = getAssets()['images/enemy2_2.png'];
 		this.health = 10;
 	}
 });
@@ -503,7 +553,7 @@ var Enemy4 = Class.create(Enemy, {
 var Enemy5 = Class.create(Enemy, {
     initialize: function (_x, _y) {
         Enemy.call(this, enemy_movesets.set6.clone(), _x, _y);
-        this.image = getAssets()['images/enemy2.png'];
+        this.image = getAssets()['images/enemy2_2.png'];
         this.health = 6;
     }
 });
@@ -527,7 +577,7 @@ var Enemy7 = Class.create(Enemy, {
 var Enemy8 = Class.create(Enemy, {
     initialize: function (_x, _y) {
         Enemy.call(this, enemy_movesets.set9.clone(), _x, _y);
-        this.image = getAssets()['images/enemy2.png'];
+        this.image = getAssets()['images/enemy2_2.png'];
         this.health = 6;
     }
 });
@@ -596,8 +646,8 @@ var Bullet = Class.create(Sprite, {
 
 var EnemyBullet = Class.create(Bullet, {
 	initialize: function(_x, _y, _damage, _direction) {
-		Bullet.call(this, 8, 15);
-		this.image = getAssets()['images/bullet2.png'];
+		Bullet.call(this, 16, 28);
+		this.image = getAssets()['images/enemy_bullet.png'];
 		this.damage = _damage;
 		this.rotate(_direction + 90);
 		this.x = _x - this.width/2;
@@ -639,13 +689,37 @@ var PlayerBullet = Class.create(Bullet, {
 		this.velY = 10 * Math.sin(this.angle);
 	}
 });
+var MissileExplosion = Class.create(Sprite, {
+	initialize: function(x, y) {
+		Sprite.call(this, 68, 68);
+		this.x = x - 24;
+		this.y = y - 11;
+		this.opacity = 1;
+		this.damage = 20;
+		this.image = game.assets['images/explosion2.png'];
+	},
+	onenterframe: function() {
+		if (this.opacity === 1) {
+			game.assets['sounds/explosion0.mp3'].play();
+			for (var c = 0; c < enemies.length; c++) {
+				if (enemies[c].intersect(this)) {
+					enemies[c].health -= this.damage;
+				}
+			}
+		}
+		this.opacity -= 1/60;
+		if (this.opacity <= 0) {
+			game.rootScene.removeChild(this);
+		}
+	}
+});
 
 var PlayerMissile = Class.create(Bullet, {
 	initialize: function(velocityX, velocityY) {
 		Bullet.call(this, 20, 44);
 		this.image = getAssets()['images/player_missile.png'];
 		this.timer = 0;
-		this.damage = 5;
+		this.damage = 0;
 		this.angle = 0;
 		var ship = getShip();
 		this.x = ship.x + 15;
@@ -658,29 +732,26 @@ var PlayerMissile = Class.create(Bullet, {
 		var ship = getShip();
 		this.timer++;
 		if (ship.shield !== null && ship.shield.intersect(this) && this.timer > 45) {
-			ship.missileExists = false;
-			game.rootScene.removeChild(this);
+			ship.explodeMissile();
+			return;
 		}
 		else if (ship.intersect(this) && this.timer > 45) {
-			ship.missileExists = false;
-			ship.health -= this.damage;
-			ship.updateComponents();
-			game.rootScene.removeChild(this);
+			ship.explodeMissile();
+			return;
 		}
 		
 		for (var j = 0; j < enemies.length; j++) {
 			if (enemies[j].intersect(this) && enemies[j].onScreen) {
-				ship.missileExists = false;
-				enemies[j].health -= this.damage;
-				game.rootScene.removeChild(this);
+				ship.explodeMissile();
+				return;
 			}
 		}
 		this.x += this.velX;
 		this.y += this.velY;
 		if (this.y > gameHeight || this.y < -this.height
 		 || this.x > gameWidth || this.x < -this.width) {
-			ship.missileExists = false;
-			game.rootScene.removeChild(this);
+			ship.explodeMissile();
+			return;
 		}
 		else {
 			if (controller.axes[CONT_INPUT.rstick_x] > 0.5 
@@ -697,6 +768,10 @@ var PlayerMissile = Class.create(Bullet, {
 				this.velY = Math.sin(this.angle) * 5;
 			}
 		}
+	},
+	explode: function() {
+		game.rootScene.addChild(new MissileExplosion(this.x, this.y));
+		game.rootScene.removeChild(this);
 	}
 });
 
@@ -785,7 +860,7 @@ window.onload = function() {
 	game = new Game(gameWidth, gameHeight);
 	game.preload(
 		'images/bg1.png', 'images/Square.png', 'images/player_bullet.png',
-		'images/bullet2.png', 'images/enemy1.png', 'images/enemy2.png',
+		'images/enemy_bullet.png', 'images/enemy1.png', 'images/enemy2_2.png',
 		'images/player_missile.png', 'images/playerShip1.png', 'images/player_shield.png',
 		'images/pulse.png', 'sounds/Inception.mp3', 'images/playerShip_base.png',
 		'images/playerShip_drive.png', 'images/playerShip_generator.png', 'images/playerShip_guns.png',
@@ -797,7 +872,9 @@ window.onload = function() {
 		'images/gui_buttonAH.png', 'images/gui_buttonBH.png', 'images/gui_buttonYH.png',
 		'images/gui_buttonLH.png', 'images/gui_barHealth.png', 'images/gui_buttonHit0.png',
 		'images/gui_buttonHit1.png', 'images/gui_barTick.png', 'images/gui_barTick1.png',
-		'images/gui_barTick2.png');
+		'images/gui_barTick2.png', 'images/explosion0.png', 'images/explosion1.png',
+		'images/explosion2.png', 'sounds/explosion0.mp3', 'images/gui_barFrame_Flash.png',
+		'images/gui_barFrame_FlashRed.png', 'images/gui_barFrame_FlashGreen.png');
 	
 	game.fps = 60;
 	game.scale = 1;
@@ -826,6 +903,9 @@ window.onload = function() {
 		barRed.button.activeImage = game.assets['images/gui_buttonBH.png'];
 		
 		barYellow = new Bar(245, gameHeight - 50);
+		barYellow.greenFlash = game.assets['images/gui_barFrame_FlashGreen.png'];
+		barYellow.redFlash = game.assets['images/gui_barFrame_FlashRed.png'];
+		barYellow.noFlash = game.assets['images/gui_barFrame_Flash.png'];
 		barYellow.filling = new Filling(barYellow.x, barYellow.y, "yellow");
 		barYellow.filling.image = game.assets['images/gui_barYellow0.png'];
 		barYellow.filling2 = new Filling(barYellow.x, barYellow.y, "gray2");
@@ -990,14 +1070,23 @@ window.onload = function() {
 				}
 				if (controller.buttons[CONT_INPUT.rstick] === 1) {
 					if (ship.checkComponent(MissileImage)) {
-						if (ship.missileExists === false) {
-							ship.missileExists = true;
+						if (ship.missile === null && ship.missilePrimed) {
 							var y = controller.axes[CONT_INPUT.rstick_y] < -0.5 ? 5 : -5;
-							game.rootScene.addChild(new PlayerMissile(0, y));
+							ship.missile = new PlayerMissile(0, y);
+							game.rootScene.addChild(ship.missile);
+						}
+						else if (ship.explosionPrimed) {
+							ship.explodeMissile();
 						}
 					}
 				}
-				if (ship.missileExists) {
+				else if (controller.buttons[CONT_INPUT.rstick] === 0) {
+					if (ship.missile !== null) {
+						ship.explosionPrimed = true;
+					}
+					ship.missilePrimed = true;
+				}
+				if (ship.missile !== null) {
 					barGray.filling.addValue(-100/120);
 				}
 				else {
