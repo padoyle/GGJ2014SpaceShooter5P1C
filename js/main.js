@@ -23,7 +23,7 @@ var CONT_INPUT = {
 	lstick_y: 1,
 	rstick_x: 2,
 	rstick_y: 3
-}
+};
 
 var game = null;
 var enemies = []; // all enemies
@@ -89,7 +89,7 @@ var enemy_movesets = {
 				new Move(Math.PI, 3, 40, 4, 0),
 				new Move((13.0 / 4.0) * Math.PI, 0.5, 60, 0, 0),
 				new Move(0.5 * Math.PI, 2, 40, 0, 0)))
-}
+};
 
 
 Ship = Class.create(Sprite, {
@@ -360,13 +360,13 @@ function updateControllers()
 }
 
 function getAssets() {
-	if (game != null) {
+	if (game !== null) {
 		return game.assets;
 	}
 }
 
 function getShips() {
-	if (game != null) {
+	if (game !== null) {
 		return game.getShips();
 	}
 }
@@ -389,7 +389,7 @@ window.onload = function() {
 
 	game.getShips = function() {
 		return ships;
-	}
+	};
 
 	game.onload = function() {
 		var label, bg;
@@ -425,8 +425,8 @@ window.onload = function() {
 				
 		game.rootScene.addEventListener('enterframe', function(e) {
 			var gameOver = true;
-			for (var k = 0; k < ships.length; k++) {
-				if (ships[k] !== null && ships[k].health > 0) {
+			for (var q = 0; q < ships.length; q++) {
+				if (ships[q] !== null && ships[q].health > 0) {
 					gameOver = false;
 					break;
 				}
@@ -474,6 +474,6 @@ window.onload = function() {
 				}
 			}
 		});
-	}
+	};
     game.start();
-}
+};
