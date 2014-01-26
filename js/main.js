@@ -432,6 +432,7 @@ window.onload = function() {
 				}
 			}
 			if (gameOver) {
+				aud.playstop();
 				game.stop();
 			}
 			updateControllers();
@@ -475,5 +476,9 @@ window.onload = function() {
 			}
 		});
 	};
+	var seed = Math.random() * 10000;
+	aud.generatepattern(.5, .5, 8, true, seed);
+	aud.playstop();
+	console.log(seed);
     game.start();
 };
