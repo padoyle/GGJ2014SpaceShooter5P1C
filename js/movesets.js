@@ -86,7 +86,7 @@ var enemy_movesets = {
                 new Move(Math.PI, 2, 120, 6, 90),
                 new Move(0.5 * Math.PI, 10, 120, 0, 0))),
     set6: new MoveSet(new Array(
-                new Move(0.5 * Math.PI, 10, 20, 0, 0),
+                new Move(0.5 * Math.PI, 3, 20, 0, 0),
                 new Move(0, 0, 0, 3, 60))),
     set7: new MoveSet(new Array(
                 new Move(0.5 * Math.PI, 3, 60, 3, 90),
