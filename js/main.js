@@ -902,6 +902,17 @@ var StartScene = Class.create(Scene, {
 	}
 });
 
+var GameOverScene = Class.create(Scene, {
+	initialize: function() {
+		Scene.apply(this);
+		
+		var sprite = new Sprite(600, 720);
+		sprite.image = game.assets['images/gameOver.png'];
+		this.addChild(sprite);
+		game.pushScene(this);
+	}
+});
+
 var gameWidth = 600;
 var gameHeight = 720;
 
@@ -954,7 +965,7 @@ window.onload = function() {
 		'images/gui_barFrame_FlashRed.png', 'images/gui_barFrame_FlashGreen.png',
 		'sounds/generator.mp3', 'sounds/shield.mp3', 'sounds/missiles.mp3',
 		'sounds/offline.mp3', 'sounds/online.mp3', 'sounds/lazers.mp3',
-		'sounds/HELLISTHEBULLET.wav', 'images/start.png');
+		'sounds/HELLISTHEBULLET.wav', 'images/start.png', 'images/gameOver.png');
 	
 	game.fps = 60;
 	game.scale = 1;
@@ -1063,6 +1074,7 @@ window.onload = function() {
 				gameOver = false;
 			}
 			if (gameOver) {
+				var gameOverScreen = new GameOverScene();
 				bgm.stop()
 				game.stop();
 			}
