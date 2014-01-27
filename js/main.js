@@ -275,12 +275,7 @@ var Bar = Class.create(Sprite, {
 			}
 			this.flashTimer--;
 		}
-		else {
-			this.image = this.neutral;
-			this.flashTimer = 40;
-		}
-		if (this.timer > 0 && this.ticker !== undefined && this.ticker.visible) {
-			this.timer--;
+		else if (this.timer > 0) {
 			if (this.timer % 10 === 0) {
 				if (this.good) {
 					this.image = this.greenFlash;
@@ -292,6 +287,11 @@ var Bar = Class.create(Sprite, {
 			else if (this.timer % 5 === 0) {
 				this.image = this.noFlash;
 			}
+			this.timer--;
+		}
+		else {
+			this.image = this.neutral;
+			this.flashTimer = 40;
 		}
 	},
 	flashGreen: function() {
@@ -1139,7 +1139,6 @@ window.onload = function() {
 					disableAllComponents = true;
 					console.log("disable");
 				}
-				console.log(disableTimer, disableTimeMax, barRed.filling.power, barGray.filling.power, barGreen.filling.power, barBlue.filling.power)
 
 				// While components are disabled
 				if (disableAllComponents === true) {
