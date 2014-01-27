@@ -858,11 +858,9 @@ var PulseScene = Class.create(Scene, {
 	onenterframe: function() {
 		this.timer++;
 		if (this.pulse.y > gameHeight) {
-			for (var v = 0; v < this.somethingDied.length; v++) {
-				if (!this.somethingDied && getShip()) {
-					getShip().health = 0;
-					getShip().updateComponents();
-				}
+			if (!this.somethingDied && getShip()) {
+				getShip().health = 0;
+				getShip().updateComponents();
 			}
 			bgm.play();
 			game.popScene();
