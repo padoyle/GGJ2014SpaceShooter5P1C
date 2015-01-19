@@ -8,7 +8,6 @@ functions.push(LoadFormation5);
 functions.push(LoadFormation6);
 functions.push(LoadFormation7);
 functions.push(LoadFormation8);
-console.log(LoadFormation0);
 };
 var LoadFormation0 = function () {
 addEnemy(new Enemy9(390, -30));

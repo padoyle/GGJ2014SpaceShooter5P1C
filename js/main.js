@@ -974,8 +974,8 @@ var formations = [];
 
 function updatecontroller()
 {
-	if (navigator.webkitGetGamepads) {
-		controller = navigator.webkitGetGamepads()[0];
+	if (navigator.getGamepads) {
+		controller = navigator.getGamepads()[0];
 	}
 }
 
@@ -1000,7 +1000,7 @@ var addEnemy = function(enemy) {
 window.onload = function() {
 	game = new Game(gameWidth + 200, gameHeight);
 	game.preload(
-		'images/bg1.png', 'images/Square.png', 'images/player_bullet.png',
+		'images/bg1.png', 'images/player_bullet.png',
 		'images/enemy_bullet.png', 'images/enemy1.png', 'images/enemy2_2.png',
 		'images/player_missile.png', 'images/playerShip1.png', 'images/player_shield.png',
 		'images/pulse.png', 'sounds/Inception.mp3', 'images/playerShip_base.png',
