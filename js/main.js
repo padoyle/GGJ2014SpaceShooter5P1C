@@ -974,8 +974,8 @@ var formations = [];
 
 function updatecontroller()
 {
-	if (navigator.getGamepads) {
-		controller = navigator.getGamepads()[0];
+	if (navigator.webkitGetGamepads) {
+		controller = navigator.webkitGetGamepads()[0];
 	}
 }
 
