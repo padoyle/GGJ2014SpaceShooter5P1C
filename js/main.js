@@ -48,6 +48,35 @@ var online = true;
 var brakesToggle = false;
 var brakesPressed = false;
 
+var Inst = Class.create(Label, {
+	initialize: function() {
+		Label.call(this);
+		this.x = 620;
+		this.y = 10;
+	}
+});
+
+var ContDet = Class.create(Label, {
+	initialize: function() {
+		Label.call(this);
+		updatecontroller();
+		if (controller) {
+			this.text = "Controller Detected!";
+		}
+		else {
+			this.text = "Controller Not Detected";
+		}		
+	},
+	onenterframe: function() {
+		if (controller) {
+			this.text = "Controller Detected!";
+		}
+		else {
+			this.text = "Controller Not Detected";
+		}
+	}
+});
+
 var BG = Class.create(Sprite, {
 	initialize: function() {
 		Sprite.call(this, gameWidth, gameHeight * 2);
@@ -215,13 +244,14 @@ var HitImage = Class.create(Sprite, {
 	}
 });
 var ButtonIcon = Class.create(Sprite, {
-	initialize: function(x, y, buttonNum) {
+	initialize: function(x, y, buttonNum, keyboard) {
 		Sprite.call(this, 30, 30);
 		this.passiveImage;
 		this.activeImage;
 		this.x = x - 35;
 		this.y = y - 5;
 		this.buttonNum = buttonNum;
+		this.keyboard = keyboard;
 		if (buttonNum > CONT_INPUT.lb) {
 			this.hitImage = new HitImage(this.x, this.y, true);
 			this.hitImage.image = game.assets['images/gui_buttonHit1.png'];
@@ -233,15 +263,13 @@ var ButtonIcon = Class.create(Sprite, {
 	},
 	onenterframe: function() {
 		updatecontroller();
-		if (controller) {
-			if (controller.buttons[this.buttonNum] === 1) {
-				this.image = this.activeImage;
-				game.rootScene.addChild(this.hitImage);
-			}
-			else {
-				this.image = this.passiveImage;
-				game.rootScene.removeChild(this.hitImage);
-			}
+		if ((controller && controller.buttons[this.buttonNum] === 1) || game.input[this.keyboard]) {
+			this.image = this.activeImage;
+			game.rootScene.addChild(this.hitImage);
+		}
+		else {
+			this.image = this.passiveImage;
+			game.rootScene.removeChild(this.hitImage);
 		}
 	}
 });
@@ -548,7 +576,6 @@ var Enemy = Class.create(Sprite, {
                 var by = this.y + this.height / 2;
                 var dir_start = 90 - this.move.angle / 2;
                 var dir_shift = this.move.angle / (this.move.bullets - 1);
-                console.log(dir_start, dir_shift);
                 for (i = 0; i < this.move.bullets; i++) {
                     bullet = new EnemyBullet(bx, by, 2, dir_start + dir_shift * i);
  	               game.rootScene.insertBefore(bullet, this);
@@ -816,10 +843,36 @@ var PlayerMissile = Class.create(Bullet, {
 			return;
 		}
 		else {
-			if (controller.axes[CONT_INPUT.rstick_x] > 0.5 
+			if (game.input.A || game.input.D || game.input.W || game.input.S) {
+				var keys = 0;
+				this.angle = 0;
+				if (game.input.A) {
+					this.angle += -Math.PI;
+					keys++;
+				}
+				if (game.input.D) {
+					if (game.input.S) {
+						this.angle += Math.PI * 2;
+					}
+					keys++;
+				}
+				if (game.input.W) {
+					this.angle += -Math.PI / 2;
+					keys++;
+				}
+				if (game.input.S) {
+					this.angle += -Math.PI * 3 / 2;
+					keys++;
+				}
+				this.angle /= keys;
+				this.rotate((180 * this.angle) / Math.PI - this.rotation + 90);
+				this.velX = Math.cos(this.angle) * 5;
+				this.velY = Math.sin(this.angle) * 5;				
+			}
+			if (controller && (controller.axes[CONT_INPUT.rstick_x] > 0.5 
 			|| controller.axes[CONT_INPUT.rstick_x] < -0.5
 			|| controller.axes[CONT_INPUT.rstick_y] > 0.5 
-			|| controller.axes[CONT_INPUT.rstick_y] < -0.5) {
+			|| controller.axes[CONT_INPUT.rstick_y] < -0.5)) {
 				this.angle = Math.atan(controller.axes[CONT_INPUT.rstick_y] /
 				              controller.axes[CONT_INPUT.rstick_x]);
 				if (controller.axes[CONT_INPUT.rstick_x] < 0) {
@@ -867,19 +920,17 @@ var PulseScene = Class.create(Scene, {
 		}
 		if (this.timer > 30) {
 			updatecontroller();
-			if (controller !== undefined) {
-				if (controller.buttons[CONT_INPUT.rstick] === 1) {
-					this.somethingDied |= getShip().removeComponent(MissileImage);
-				}
-				if (controller.buttons[CONT_INPUT.a] === 1) {
-					this.somethingDied |= getShip().removeComponent(ShieldImage);
-				}
-				if (controller.buttons[CONT_INPUT.b] === 1) {
-					this.somethingDied |= getShip().removeComponent(GunImage);
-				}
-				if (controller.buttons[CONT_INPUT.y] === 1) {
-					this.somethingDied |= getShip().removeComponent(GeneratorImage);
-				}
+			if ((controller && controller.buttons[CONT_INPUT.rstick] === 1) || game.input.Q) {
+				this.somethingDied |= getShip().removeComponent(MissileImage);
+			}
+			if ((controller && controller.buttons[CONT_INPUT.a] === 1) || game.input.Backspace) {
+				this.somethingDied |= getShip().removeComponent(ShieldImage);
+			}
+			if ((controller && controller.buttons[CONT_INPUT.b] === 1) || game.input.Esc) {
+				this.somethingDied |= getShip().removeComponent(GunImage);
+			}
+			if ((controller && controller.buttons[CONT_INPUT.y] === 1) || game.input.Space) {
+				this.somethingDied |= getShip().removeComponent(GeneratorImage);
 			}
 		}
 	}
@@ -897,11 +948,9 @@ var StartScene = Class.create(Scene, {
 		
 	onenterframe: function() {
 		updatecontroller();
-		if (controller !== undefined) {
-			if (controller.buttons[CONT_INPUT.start] === 1) {
-				// Call game state
-				game.popScene();
-			}
+		if ((controller && controller.buttons[CONT_INPUT.start] === 1) || game.input.Enter) {
+			// Call game state
+			game.popScene();
 		}
 	}
 });
@@ -949,7 +998,7 @@ var addEnemy = function(enemy) {
 
 // When document loads, set up basic game
 window.onload = function() {
-	game = new Game(gameWidth, gameHeight);
+	game = new Game(gameWidth + 200, gameHeight);
 	game.preload(
 		'images/bg1.png', 'images/Square.png', 'images/player_bullet.png',
 		'images/enemy_bullet.png', 'images/enemy1.png', 'images/enemy2_2.png',
@@ -971,6 +1020,19 @@ window.onload = function() {
 		'sounds/offline.mp3', 'sounds/online.mp3', 'sounds/lazers.mp3',
 		'sounds/HELLISTHEBULLET.wav', 'images/exlposions.png', 'images/start.png',
 		'sounds/powerOn.mp3', 'images/gameOver.png');
+		
+	//For arrow keys, use game.input.left/right/up/down	
+	//For these below, use game.input.<string>
+	game.keybind(65, 'A');
+	game.keybind(68, 'D');
+	game.keybind(87, 'W');
+	game.keybind(83, 'S');
+	game.keybind(46, 'Del');
+	game.keybind(81, 'Q');
+	game.keybind(8, 'Backspace');
+	game.keybind(32, 'Space');
+	game.keybind(13, 'Enter');
+	game.keybind(27, 'Esc');
 	
 	game.fps = 60;
 	game.scale = 1;
@@ -984,23 +1046,20 @@ window.onload = function() {
 	};
 
 	game.onload = function() {
-		var label, bg, bar;
 		var startScreen = new StartScene();
 
         FunctionSetup();
-		label = new Label("FIVE Players.  ONE controller.");
-		label.color = 'white';
-		
+
 		bg = new BG();
 		bg.image = game.assets['images/bg1.png'];
-		
+
 		onlineSound = game.assets['sounds/online.mp3'];
 		offlineSound = game.assets['sounds/offline.mp3'];
 		
 		barRed = new Bar(80, gameHeight - 50);
 		barRed.filling = new Filling(barRed.x, barRed.y, "red");
 		barRed.filling.image = game.assets['images/gui_barRed.png'];
-		barRed.button = new ButtonIcon(barRed.x, barRed.y, CONT_INPUT.b);
+		barRed.button = new ButtonIcon(barRed.x, barRed.y, CONT_INPUT.b, "Esc");
 		barRed.button.passiveImage = game.assets['images/gui_buttonB.png'];
 		barRed.button.activeImage = game.assets['images/gui_buttonBH.png'];
 		
@@ -1012,33 +1071,32 @@ window.onload = function() {
 		barYellow.filling2 = new Filling(barYellow.x, barYellow.y, "gray2");
 		barYellow.filling2.image = game.assets['images/gui_barGray.png'];
 		
-		barYellow.button = new ButtonIcon(barYellow.x, barYellow.y, CONT_INPUT.y);
+		barYellow.button = new ButtonIcon(barYellow.x, barYellow.y, CONT_INPUT.y, "Space");
 		barYellow.button.passiveImage = game.assets['images/gui_buttonY.png'];
 		barYellow.button.activeImage = game.assets['images/gui_buttonYH.png'];
 		
 		barGreen = new Bar(410, gameHeight - 50);
 		barGreen.filling = new Filling(barGreen.x, barGreen.y, "green");
 		barGreen.filling.image = game.assets['images/gui_barGreen.png'];
-		barGreen.button = new ButtonIcon(barGreen.x, barGreen.y, CONT_INPUT.a);
+		barGreen.button = new ButtonIcon(barGreen.x, barGreen.y, CONT_INPUT.a, "Backspace");
 		barGreen.button.passiveImage = game.assets['images/gui_buttonA.png'];
 		barGreen.button.activeImage = game.assets['images/gui_buttonAH.png'];
 		
 		barBlue = new Bar(170, gameHeight - 100);
 		barBlue.filling = new Filling(barBlue.x, barBlue.y, "blue");
 		barBlue.filling.image = game.assets['images/gui_barBlue.png'];
-		barBlue.button = new ButtonIcon(barBlue.x, barBlue.y, CONT_INPUT.lstick);
+		barBlue.button = new ButtonIcon(barBlue.x, barBlue.y, CONT_INPUT.lstick, "Del");
 		barBlue.button.passiveImage = game.assets['images/gui_buttonL.png'];
 		barBlue.button.activeImage = game.assets['images/gui_buttonLH.png'];
 		
 		barGray = new Bar(335, gameHeight - 100);
 		barGray.filling = new Filling(barGray.x, barGray.y, "gray");
 		barGray.filling.image = game.assets['images/gui_barGray.png'];
-		barGray.button = new ButtonIcon(barGray.x, barGray.y, CONT_INPUT.rstick);
+		barGray.button = new ButtonIcon(barGray.x, barGray.y, CONT_INPUT.rstick, "Q");
 		barGray.button.passiveImage = game.assets['images/gui_buttonR.png'];
 		barGray.button.activeImage = game.assets['images/gui_buttonRH.png'];
 
 		game.rootScene.addChild(bg);
-		game.rootScene.addChild(label);
 		game.rootScene.addChild(barRed);
 		game.rootScene.addChild(barRed.filling);
 		game.rootScene.addChild(barRed.button);
@@ -1057,6 +1115,58 @@ window.onload = function() {
 		game.rootScene.addChild(barGray.filling);
 		game.rootScene.addChild(barGray.button);
 		
+		var contdet = new ContDet();
+		contdet.x = 620;
+		contdet.y = 10;
+		contdet.color = "black";
+		game.rootScene.addChild(contdet);
+		
+		var controls = new Label("Keyboard Controls:");
+		controls.x = 620;
+		controls.y = 50;
+		controls.color = "black";
+		game.rootScene.addChild(controls);
+		var controls2 = new Label("Move: Arrow Keys");
+		controls2.x = 620;
+		controls2.y = 70;
+		controls2.color = "black";
+		game.rootScene.addChild(controls2);
+		var controls3 = new Label("Toggle Brake: Del");
+		controls3.x = 620;
+		controls3.y = 90;
+		controls3.color = "black";
+		game.rootScene.addChild(controls3);
+		var controls4 = new Label("Lasers: Esc");
+		controls4.x = 620;
+		controls4.y = 110;
+		controls4.color = "black";
+		game.rootScene.addChild(controls4);
+		var controls5 = new Label("Shields: Backspace");
+		controls5.x = 620;
+		controls5.y = 130;
+		controls5.color = "black";
+		game.rootScene.addChild(controls5);
+		var controls6 = new Label("Generator: Spacebar");
+		controls6.x = 620;
+		controls6.y = 150;
+		controls6.color = "black";
+		game.rootScene.addChild(controls6);
+		var controls7 = new Label("Fire Missile: Q");
+		controls7.x = 620;
+		controls7.y = 170;
+		controls7.color = "black";
+		game.rootScene.addChild(controls7);
+		var controls8 = new Label("Move Missile: WASD");
+		controls8.x = 620;
+		controls8.y = 190;
+		controls8.color = "black";
+		game.rootScene.addChild(controls8);
+		var controls9 = new Label("Start: Enter");
+		controls9.x = 620;
+		controls9.y = 210;
+		controls9.color = "black";
+		game.rootScene.addChild(controls9);	
+		
 		updatecontroller();
 		
 		bgm = game.assets['sounds/HELLISTHEBULLET.wav'];
@@ -1068,10 +1178,6 @@ window.onload = function() {
 		ship = new Ship(100);
 		game.rootScene.addChild(ship);
 		ship.drawComponents();
-
-		healthDisplay = new Label("Health: ");
-		healthDisplay.color = 'white';
-		healthDisplay.x = gameWidth - 60;
 
 		game.rootScene.addEventListener('enterframe', function(e) {
 			var gameOver = true;
@@ -1129,156 +1235,177 @@ window.onload = function() {
 			    }
 			}
 
-			if (controller !== undefined) {
-				// If nothing's disabled, but bars are empty				
-				if (!disableAllComponents && disableTimer <= 0 && (barRed.filling.power + barGray.filling.power
-																+ barGreen.filling.power + barBlue.filling.power) == 0) {
-					disableTimer = disableTimeMax;
-					disableAllComponents = true;
-					console.log("disable");
+			// If nothing's disabled, but bars are empty				
+			if (!disableAllComponents && disableTimer <= 0 && (barRed.filling.power + barGray.filling.power
+															+ barGreen.filling.power + barBlue.filling.power) == 0) {
+				disableTimer = disableTimeMax;
+				disableAllComponents = true;
+			}
+			// While components are disabled
+			if (disableAllComponents === true) {
+				if (disableTimer <= 0) {
+					disableTimer = 0;
+					disableAllComponents = false;
+					barRed.filling.addValue(50);
+					barBlue.filling.addValue(50);
+					barGreen.filling.addValue(50);
+					barGray.filling.addValue(50);
 				}
-
-				// While components are disabled
-				if (disableAllComponents === true) {
-					if (disableTimer <= 0) {
-						disableTimer = 0;
-						disableAllComponents = false;
-						console.log("COMING BACK ONLINE");
-						barRed.filling.addValue(50);
-						barBlue.filling.addValue(50);
-						barGreen.filling.addValue(50);
-						barGray.filling.addValue(50);
+				if (ship.shield !== null) {
+					game.rootScene.removeChild(ship.shield);
+					ship.shield = null;
+				}
+				if (brakesToggle) {
+					brakesToggle = false;
+					brakesPressed = false;
+				}
+				if (ship.missile !== null) {
+					ship.explodeMissile();
+				}
+				disableTimer -= 1;
+			}
+			else {
+				if (ship.missile === null) {
+					barGray.filling.addValue(4/9);
+				}
+				if ((controller && controller.buttons[CONT_INPUT.lstick] === 1) || game.input.Del) {
+					brakesPressed = true;
+				}
+				else {
+					if (brakesPressed) {
+						brakesToggle = !brakesToggle;
+						brakesPressed = false;
 					}
+				}
+				if (brakesToggle) {
+					ship.speed = 3.5;						
+					barBlue.filling.addValue(-0.9);
+				}
+				else {
+					ship.speed = 7;
+					barBlue.filling.addValue(0.5);
+				}
+				if (((controller && controller.buttons[CONT_INPUT.b] === 1) || game.input.Esc) && ship.bulletTimer >= 10) {
+					if (ship.checkComponent(GunImage)) {
+						if (barRed.filling.power === 100) {
+							game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI / 2));
+							game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI * 7 / 16));
+							game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI * 3 / 8));
+							game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI * 5 / 16));
+							game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI / 4));
+							game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI * 9 / 16));
+							game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI * 5 / 8));
+							game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI * 11 / 16));
+							game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI * 3 / 4));
+							ship.bulletTimer = 0;
+							barRed.filling.addValue(-28);
+						}
+						else {
+							game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI / 2));
+							game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI * 0.42));
+							game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI * 0.58));
+							ship.bulletTimer = 0;
+							barRed.filling.addValue(-17);
+						}
+					}
+				}
+				barRed.filling.addValue(.5);
+				if ((controller && controller.buttons[CONT_INPUT.a] === 1) || game.input.Backspace) {
+					if (ship.shield === null) {
+						if (ship.checkComponent(ShieldImage)) {
+							ship.shield = new Shield();
+							game.rootScene.addChild(ship.shield);
+						}
+					}
+					else {
+						barGreen.filling.addValue(-3);
+					}
+				}
+				else if ((!controller || controller.buttons[CONT_INPUT.a] === 0) && !game.input.Backspace) {
 					if (ship.shield !== null) {
 						game.rootScene.removeChild(ship.shield);
 						ship.shield = null;
 					}
-					if (brakesToggle) {
-						brakesToggle = false;
-						brakesPressed = false;
-					}
-					if (ship.missile !== null) {
-						ship.explodeMissile();
-					}
-					disableTimer -= 1;
+					barGreen.filling.addValue(0.5);
 				}
-				else {
-					if (ship.missile === null) {
-						barGray.filling.addValue(4/9);
-					}
-					if (controller.buttons[CONT_INPUT.lstick] === 1) {
-						brakesPressed = true;
-					}
-					else {
-						if (brakesPressed) {
-							brakesToggle = !brakesToggle;
-							brakesPressed = false;
-						}
-					}
-					if (brakesToggle) {
-						ship.speed = 3.5;						
-						barBlue.filling.addValue(-0.9);
-					}
-					else {
-						ship.speed = 7;
-						barBlue.filling.addValue(0.5);
-					}
-					if (controller.buttons[CONT_INPUT.b] === 1 && ship.bulletTimer >= 10) {
-						if (ship.checkComponent(GunImage)) {
-							if (barRed.filling.power === 100) {
-								game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI / 2));
-								game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI * 7 / 16));
-								game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI * 3 / 8));
-								game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI * 5 / 16));
-								game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI / 4));
-								game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI * 9 / 16));
-								game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI * 5 / 8));
-								game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI * 11 / 16));
-								game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI * 3 / 4));
-								ship.bulletTimer = 0;
-								barRed.filling.addValue(-28);
+				if ((controller && controller.buttons[CONT_INPUT.rstick] === 1) || game.input.Q) {
+					if (ship.checkComponent(MissileImage)) {
+						if (ship.missile === null && ship.missilePrimed) {
+							var y;
+							if (game.input.Q) {
+								if (game.input.S) {
+									y = 5;
+								}
+								else {
+									y = -5;
+								}	
 							}
 							else {
-								game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI / 2));
-								game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI * 0.42));
-								game.rootScene.addChild(new PlayerBullet(ship.x + ship.width/2, ship.y, -Math.PI * 0.58));
-								ship.bulletTimer = 0;
-								barRed.filling.addValue(-17);
+								y = controller.axes[CONT_INPUT.rstick_y] < -0.5 ? 5 : -5;
 							}
+							ship.missile = new PlayerMissile(0, y);
+							game.rootScene.addChild(ship.missile);
+							barGray.filling.addValue(-35);
 						}
-					}
-					barRed.filling.addValue(.5);
-					if (controller.buttons[CONT_INPUT.a] === 1) {
-						if (ship.shield === null) {
-							if (ship.checkComponent(ShieldImage)) {
-								ship.shield = new Shield();
-								game.rootScene.addChild(ship.shield);
-							}
-						}
-						else {
-							barGreen.filling.addValue(-3);
-						}
-					}
-					else if (controller.buttons[CONT_INPUT.a] === 0) {
-						if (ship.shield !== null) {
-							game.rootScene.removeChild(ship.shield);
-							ship.shield = null;
-						}
-						barGreen.filling.addValue(0.5);
-					}
-					if (controller.buttons[CONT_INPUT.rstick] === 1) {
-						if (ship.checkComponent(MissileImage)) {
-							if (ship.missile === null && ship.missilePrimed) {
-								var y = controller.axes[CONT_INPUT.rstick_y] < -0.5 ? 5 : -5;
-								ship.missile = new PlayerMissile(0, y);
-								game.rootScene.addChild(ship.missile);
-								barGray.filling.addValue(-35);
-
-							}
-							else if (ship.explosionPrimed) {
-								ship.explodeMissile();
-							}
-						}
-					}
-					else if (controller.buttons[CONT_INPUT.rstick] === 0) {
-						if (ship.missile !== null) {
-							ship.explosionPrimed = true;
-						}
-						ship.missilePrimed = true;
-					}
-					if (controller.buttons[CONT_INPUT.y] === 1) {
-						if (ship.checkComponent(GeneratorImage)) {
-							barYellow.filling.checkticker();
-						}
-					}
-					else if (controller.buttons[CONT_INPUT.y] === 0 && barYellow.filling.released === false){
-						if (ship.checkComponent(GeneratorImage)) {
-							barYellow.filling.releaseticker();
+						else if (ship.explosionPrimed) {
+							ship.explodeMissile();
 						}
 					}
 				}
-				if (controller.axes[CONT_INPUT.lstick_x] > 0.5 || controller.axes[CONT_INPUT.lstick_x] < -0.5) {
+				else if ((!controller ||controller.buttons[CONT_INPUT.rstick] === 0) && !game.input.Q) {
+					if (ship.missile !== null) {
+						ship.explosionPrimed = true;
+					}
+					ship.missilePrimed = true;
+				}
+				if ((controller && controller.buttons[CONT_INPUT.y] === 1) || game.input.Space) {
+					if (ship.checkComponent(GeneratorImage)) {
+						barYellow.filling.checkticker();
+					}
+				}
+				else if ((!controller || controller.buttons[CONT_INPUT.y] === 0) && !game.input.Space && barYellow.filling.released === false){
+					if (ship.checkComponent(GeneratorImage)) {
+						barYellow.filling.releaseticker();
+					}
+				}
+				if (controller && (controller.axes[CONT_INPUT.lstick_x] > 0.5 || controller.axes[CONT_INPUT.lstick_x] < -0.5)) {
 					ship.x += controller.axes[CONT_INPUT.lstick_x] * ship.speed;
 					ship.updateComponents();
 				}
-				if (controller.axes[CONT_INPUT.lstick_y] > 0.5 || controller.axes[CONT_INPUT.lstick_y] < -0.5) {
+				if (game.input.left) {
+					ship.x -= ship.speed;
+					ship.updateComponents();
+				}
+				if (game.input.right) {
+					ship.x += ship.speed;
+					ship.updateComponents();
+				}
+				if (controller && (controller.axes[CONT_INPUT.lstick_y] > 0.5 || controller.axes[CONT_INPUT.lstick_y] < -0.5)) {
 					ship.y += controller.axes[CONT_INPUT.lstick_y] * ship.speed;
 					ship.updateComponents();
 				}
+				if (game.input.up) {
+					ship.y -= ship.speed;
+					ship.updateComponents();
+				}
+				if (game.input.down) {
+					ship.y += ship.speed;
+					ship.updateComponents();
+				}
 				if (chooseComponent) {
-					if (!ship.checkComponent(GeneratorImage) && controller.buttons[CONT_INPUT.y] === 1) {
+					if (!ship.checkComponent(GeneratorImage) && ((controller && controller.buttons[CONT_INPUT.y] === 1) || game.input.Space)) {
 						chooseComponent = false;
 						ship.addComponent(GeneratorImage);
 					}
-					else if (!ship.checkComponent(ShieldImage) && controller.buttons[CONT_INPUT.a] === 1) {
+					else if (!ship.checkComponent(ShieldImage) && ((controller && controller.buttons[CONT_INPUT.a] === 1) || game.input.Backspace)) {
 						chooseComponent = false;
 						ship.addComponent(ShieldImage);
 					}
-					else if (!ship.checkComponent(GunImage) && controller.buttons[CONT_INPUT.b] === 1) {
+					else if (!ship.checkComponent(GunImage) && ((controller && controller.buttons[CONT_INPUT.b] === 1) || game.input.Esc)) {
 						chooseComponent = false;
 						ship.addComponent(GunImage);
 					}
-					else if (!ship.checkComponent(MissileImage) && controller.buttons[CONT_INPUT.rstick] === 1) {
+					else if (!ship.checkComponent(MissileImage) && ((controller && controller.buttons[CONT_INPUT.rstick] === 1) || game.input.Q)) {
 						chooseComponent = false;
 						ship.addComponent(MissileImage);
 					} 
