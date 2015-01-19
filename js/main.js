@@ -444,6 +444,7 @@ var Ship = Class.create(Sprite, {
 			}
 			this.hitBox.x = this.x + 10;
 			this.hitBox.y = this.y + 10;
+			this.updateComponents();
 		});
 	},
 	updateComponents: function() {
