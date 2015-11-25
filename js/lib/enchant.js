@@ -5077,12 +5077,13 @@ enchant.Surface = enchant.Class.create(enchant.EventTarget, {
         this.context = null;
 
         var id = 'enchant-surface' + core._surfaceID++;
-        if (document.getCSSCanvasContext) {
-            this.context = document.getCSSCanvasContext('2d', id, width, height);
-            this._element = this.context.canvas;
-            this._css = '-webkit-canvas(' + id + ')';
-            var context = this.context;
-        } else if (document.mozSetImageElement) {
+//        if (document.getCSSCanvasContext) {
+//            this.context = document.getCSSCanvasContext('2d', id, width, height);
+//            this._element = this.context.canvas;
+//            this._css = '-webkit-canvas(' + id + ')';
+//            var context = this.context;
+//        } else 
+		if (document.mozSetImageElement) {
             this._element = document.createElement('canvas');
             this._element.width = width;
             this._element.height = height;

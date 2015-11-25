@@ -924,7 +924,7 @@ var PulseScene = Class.create(Scene, {
 			if ((controller && controller.buttons[CONT_INPUT.rstick] === 1) || game.input.Q) {
 				this.somethingDied |= getShip().removeComponent(MissileImage);
 			}
-			if ((controller && controller.buttons[CONT_INPUT.a] === 1) || game.input.Backspace) {
+			if ((controller && controller.buttons[CONT_INPUT.a] === 1) || game.input.P) {
 				this.somethingDied |= getShip().removeComponent(ShieldImage);
 			}
 			if ((controller && controller.buttons[CONT_INPUT.b] === 1) || game.input.Esc) {
@@ -1030,7 +1030,7 @@ window.onload = function() {
 	game.keybind(83, 'S');
 	game.keybind(46, 'Del');
 	game.keybind(81, 'Q');
-	game.keybind(8, 'Backspace');
+	game.keybind(80, 'P');
 	game.keybind(32, 'Space');
 	game.keybind(13, 'Enter');
 	game.keybind(27, 'Esc');
@@ -1079,7 +1079,7 @@ window.onload = function() {
 		barGreen = new Bar(410, gameHeight - 50);
 		barGreen.filling = new Filling(barGreen.x, barGreen.y, "green");
 		barGreen.filling.image = game.assets['images/gui_barGreen.png'];
-		barGreen.button = new ButtonIcon(barGreen.x, barGreen.y, CONT_INPUT.a, "Backspace");
+		barGreen.button = new ButtonIcon(barGreen.x, barGreen.y, CONT_INPUT.a, "P");
 		barGreen.button.passiveImage = game.assets['images/gui_buttonA.png'];
 		barGreen.button.activeImage = game.assets['images/gui_buttonAH.png'];
 		
@@ -1142,7 +1142,7 @@ window.onload = function() {
 		controls4.y = 110;
 		controls4.color = "black";
 		game.rootScene.addChild(controls4);
-		var controls5 = new Label("Shields: Backspace");
+		var controls5 = new Label("Shields: P");
 		controls5.x = 620;
 		controls5.y = 130;
 		controls5.color = "black";
@@ -1311,7 +1311,7 @@ window.onload = function() {
 					}
 				}
 				barRed.filling.addValue(.5);
-				if ((controller && controller.buttons[CONT_INPUT.a] === 1) || game.input.Backspace) {
+				if ((controller && controller.buttons[CONT_INPUT.a] === 1) || game.input.P) {
 					if (ship.shield === null) {
 						if (ship.checkComponent(ShieldImage)) {
 							ship.shield = new Shield();
@@ -1322,7 +1322,7 @@ window.onload = function() {
 						barGreen.filling.addValue(-3);
 					}
 				}
-				else if ((!controller || controller.buttons[CONT_INPUT.a] === 0) && !game.input.Backspace) {
+				else if ((!controller || controller.buttons[CONT_INPUT.a] === 0) && !game.input.P) {
 					if (ship.shield !== null) {
 						game.rootScene.removeChild(ship.shield);
 						ship.shield = null;
@@ -1398,7 +1398,7 @@ window.onload = function() {
 						chooseComponent = false;
 						ship.addComponent(GeneratorImage);
 					}
-					else if (!ship.checkComponent(ShieldImage) && ((controller && controller.buttons[CONT_INPUT.a] === 1) || game.input.Backspace)) {
+					else if (!ship.checkComponent(ShieldImage) && ((controller && controller.buttons[CONT_INPUT.a] === 1) || game.input.P)) {
 						chooseComponent = false;
 						ship.addComponent(ShieldImage);
 					}
